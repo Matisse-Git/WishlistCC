@@ -1,10 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { AlertTriangle, Wand2 } from "lucide-react";
+import { AlertTriangle, Wand2, ImageOff } from "lucide-react";
 import { Modal } from "./ui/Modal";
 import { Button } from "./ui/Button";
 import { CurrencySelect } from "./ui/CurrencySelect";
+import { Input, Textarea, Select, Label } from "./ui/Input";
 import { LabelPicker } from "./LabelPicker";
 import { useToast } from "./ToastProvider";
 import type { SerializedItem } from "@/lib/items";
@@ -56,6 +57,7 @@ export function ItemFormModal({ open, onClose, mode, initial, warnings, onSaved 
   const [saving, setSaving] = useState(false);
   const [fetchingPreview, setFetchingPreview] = useState(false);
   const [localWarnings, setLocalWarnings] = useState<string[]>(warnings ?? []);
+  const [imageErrored, setImageErrored] = useState(false);
 
   // Reset the form whenever the modal transitions to open, adjusted during
   // render (React's recommended pattern) rather than in an effect, so the
@@ -79,11 +81,13 @@ export function ItemFormModal({ open, onClose, mode, initial, warnings, onSaved 
         labels: initial?.labels ?? [],
       });
       setLocalWarnings(warnings ?? []);
+      setImageErrored(false);
     }
   }
 
   function set<K extends keyof ReturnType<typeof emptyState>>(key: K, value: ReturnType<typeof emptyState>[K]) {
     setForm((prev) => ({ ...prev, [key]: value }));
+    if (key === "imageUrl") setImageErrored(false);
   }
 
   async function handleFetchDetails() {
@@ -112,8 +116,10 @@ export function ItemFormModal({ open, onClose, mode, initial, warnings, onSaved 
         store: prev.store || data.store || "",
       }));
       setLocalWarnings(data.warnings ?? []);
+      setImageErrored(false);
       if (!data.warnings?.length) showToast("Details fetched.", "success");
     } catch (err) {
+      setLocalWarnings(["Couldn't fetch details from that link. You can still fill the item in manually."]);
       showToast(err instanceof Error ? err.message : "Failed to fetch details", "error");
     } finally {
       setFetchingPreview(false);
@@ -166,29 +172,32 @@ export function ItemFormModal({ open, onClose, mode, initial, warnings, onSaved 
     }
   }
 
+  const isFormValid = form.title.trim().length > 0;
+
   return (
     <Modal
       open={open}
       onClose={onClose}
       title={mode === "add" ? "Add wishlist item" : "Edit item"}
+      description={mode === "add" ? "Paste a link and fetch details, or fill it in yourself." : undefined}
       maxWidthClassName="max-w-xl"
       footer={
         <>
           <Button variant="secondary" onClick={onClose} disabled={saving}>
             Cancel
           </Button>
-          <Button variant="primary" onClick={handleSubmit} loading={saving}>
+          <Button variant="primary" onClick={handleSubmit} loading={saving} disabled={!isFormValid}>
             Save
           </Button>
         </>
       }
     >
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-5">
         {localWarnings.length > 0 && (
-          <div className="rounded-md bg-amber-50 border border-amber-200 text-amber-800 text-xs px-3 py-2 space-y-1">
+          <div className="space-y-1 rounded-xl border border-amber-200 bg-warning-soft px-3.5 py-2.5 text-xs text-amber-800">
             {localWarnings.map((w, i) => (
               <div key={i} className="flex items-start gap-1.5">
-                <AlertTriangle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+                <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
                 <span>{w}</span>
               </div>
             ))}
@@ -196,124 +205,117 @@ export function ItemFormModal({ open, onClose, mode, initial, warnings, onSaved 
         )}
 
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">Product URL</label>
+          <Label htmlFor="item-url">Product URL</Label>
           <div className="flex gap-2">
-            <input
+            <Input
+              id="item-url"
               type="text"
               value={form.url}
               onChange={(e) => set("url", e.target.value)}
               placeholder="https://example.com/product"
-              className="flex-1 rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="flex-1"
             />
             <Button type="button" variant="secondary" onClick={handleFetchDetails} loading={fetchingPreview}>
               <Wand2 className="h-4 w-4" />
-              Fetch details
+              Fetch
             </Button>
+          </div>
+          <p className="mt-1.5 text-xs text-muted-foreground">
+            We&rsquo;ll try to automatically fill the image, title, and price.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-[1fr_auto] gap-4">
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="item-title">Title *</Label>
+              <Input id="item-title" type="text" required value={form.title} onChange={(e) => set("title", e.target.value)} />
+            </div>
+            <div>
+              <Label htmlFor="item-image">Image URL</Label>
+              <Input id="item-image" type="text" value={form.imageUrl} onChange={(e) => set("imageUrl", e.target.value)} />
+            </div>
+          </div>
+          <div className="pt-6">
+            <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-xl border border-border bg-surface-muted">
+              {form.imageUrl && !imageErrored ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={form.imageUrl}
+                  alt=""
+                  referrerPolicy="no-referrer"
+                  className="h-full w-full object-cover"
+                  onError={() => setImageErrored(true)}
+                />
+              ) : (
+                <ImageOff className="h-5 w-5 text-muted-foreground/40" strokeWidth={1.5} />
+              )}
+            </div>
           </div>
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">Title *</label>
-          <input
-            type="text"
-            required
-            value={form.title}
-            onChange={(e) => set("title", e.target.value)}
-            className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">Description</label>
-          <textarea
-            value={form.description}
-            onChange={(e) => set("description", e.target.value)}
-            rows={2}
-            className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">Image URL</label>
-          <input
-            type="text"
-            value={form.imageUrl}
-            onChange={(e) => set("imageUrl", e.target.value)}
-            className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-          />
+          <Label htmlFor="item-description">Description</Label>
+          <Textarea id="item-description" value={form.description} onChange={(e) => set("description", e.target.value)} rows={2} />
         </div>
 
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Price</label>
-            <input
+            <Label htmlFor="item-price">Price</Label>
+            <Input
+              id="item-price"
               type="number"
               min="0"
               step="0.01"
               value={form.originalPrice}
               onChange={(e) => set("originalPrice", e.target.value)}
-              className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Currency</label>
-            <CurrencySelect value={form.originalCurrency} onChange={(v) => set("originalCurrency", v)} className="w-full" />
+            <Label htmlFor="item-currency">Currency</Label>
+            <CurrencySelect id="item-currency" value={form.originalCurrency} onChange={(v) => set("originalCurrency", v)} className="w-full" />
           </div>
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">
-            Converted price override <span className="font-normal text-slate-400">(optional)</span>
-          </label>
-          <input
+          <Label htmlFor="item-converted">
+            Converted price override <span className="font-normal text-muted-foreground">(optional)</span>
+          </Label>
+          <Input
+            id="item-converted"
             type="number"
             min="0"
             step="0.01"
             value={form.convertedPriceOverride}
             onChange={(e) => set("convertedPriceOverride", e.target.value)}
             placeholder="Leave blank to auto-convert"
-            className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
           />
         </div>
 
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Store</label>
-            <input
-              type="text"
-              value={form.store}
-              onChange={(e) => set("store", e.target.value)}
-              className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            />
+            <Label htmlFor="item-store">Store</Label>
+            <Input id="item-store" type="text" value={form.store} onChange={(e) => set("store", e.target.value)} />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Priority</label>
-            <select
-              value={form.priority}
-              onChange={(e) => set("priority", e.target.value)}
-              className="w-full rounded-md border border-slate-300 px-2.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            >
+            <Label htmlFor="item-priority">Priority</Label>
+            <Select id="item-priority" value={form.priority} onChange={(e) => set("priority", e.target.value)}>
               <option value="">None</option>
               <option value="low">Low</option>
               <option value="medium">Medium</option>
               <option value="high">High</option>
-            </select>
+            </Select>
           </div>
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">Labels</label>
+          <Label>Labels</Label>
           <LabelPicker value={form.labels} onChange={(labels) => set("labels", labels)} />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">Notes</label>
-          <textarea
-            value={form.notes}
-            onChange={(e) => set("notes", e.target.value)}
-            rows={2}
-            className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-          />
+          <Label htmlFor="item-notes">Notes</Label>
+          <Textarea id="item-notes" value={form.notes} onChange={(e) => set("notes", e.target.value)} rows={2} />
         </div>
       </form>
     </Modal>

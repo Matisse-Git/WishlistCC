@@ -1,9 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import { ShoppingCart } from "lucide-react";
 import { Modal } from "./ui/Modal";
 import { Button } from "./ui/Button";
 import { CurrencySelect } from "./ui/CurrencySelect";
+import { Input, Textarea, Label } from "./ui/Input";
 import { useToast } from "./ToastProvider";
 import type { SerializedItem } from "@/lib/items";
 
@@ -81,6 +83,7 @@ export function MarkBoughtModal({ open, onClose, item, onSaved }: MarkBoughtModa
             Cancel
           </Button>
           <Button variant="primary" onClick={handleSubmit} loading={saving}>
+            <ShoppingCart className="h-4 w-4" />
             Mark as bought
           </Button>
         </>
@@ -88,39 +91,29 @@ export function MarkBoughtModal({ open, onClose, item, onSaved }: MarkBoughtModa
     >
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">Bought on</label>
-          <input
-            type="date"
-            value={boughtAt}
-            onChange={(e) => setBoughtAt(e.target.value)}
-            className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-          />
+          <Label htmlFor="bought-at">Bought on</Label>
+          <Input id="bought-at" type="date" value={boughtAt} onChange={(e) => setBoughtAt(e.target.value)} />
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Price paid</label>
-            <input
+            <Label htmlFor="bought-price">Price paid</Label>
+            <Input
+              id="bought-price"
               type="number"
               min="0"
               step="0.01"
               value={boughtPrice}
               onChange={(e) => setBoughtPrice(e.target.value)}
-              className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Currency</label>
-            <CurrencySelect value={boughtCurrency} onChange={setBoughtCurrency} className="w-full" />
+            <Label htmlFor="bought-currency">Currency</Label>
+            <CurrencySelect id="bought-currency" value={boughtCurrency} onChange={setBoughtCurrency} className="w-full" />
           </div>
         </div>
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">Notes</label>
-          <textarea
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            rows={2}
-            className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-          />
+          <Label htmlFor="bought-notes">Notes</Label>
+          <Textarea id="bought-notes" value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} />
         </div>
       </form>
     </Modal>

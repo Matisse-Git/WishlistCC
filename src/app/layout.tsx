@@ -1,16 +1,11 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Inter } from "next/font/google";
 import "./globals.css";
 import { Nav } from "@/components/Nav";
 import { ToastProvider } from "@/components/ToastProvider";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const inter = Inter({
+  variable: "--font-inter",
   subsets: ["latin"],
 });
 
@@ -21,14 +16,11 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html
-      lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
-    >
-      <body className="min-h-full flex flex-col bg-slate-50 text-slate-900">
+    <html lang="en" className={`${inter.variable} h-full antialiased`}>
+      <body className="min-h-full flex flex-col bg-background text-foreground">
         <ToastProvider>
           <Nav />
-          <main className="flex-1 mx-auto w-full max-w-6xl px-4 sm:px-6 py-6">{children}</main>
+          <main className="flex-1 mx-auto w-full max-w-6xl px-4 sm:px-6 py-6 pb-24 sm:pb-6">{children}</main>
         </ToastProvider>
       </body>
     </html>

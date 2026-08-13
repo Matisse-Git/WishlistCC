@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { Search, X } from "lucide-react";
+import { Card } from "./ui/Card";
+import { Select } from "./ui/Input";
 
 interface FiltersBarProps {
   stores: string[];
@@ -50,88 +52,81 @@ export function FiltersBar({ stores, labels, showStatusFilter = false, showMissi
   );
 
   return (
-    <div className="bg-white border border-slate-200 rounded-xl p-3 flex flex-wrap gap-2 items-center">
-      <div className="relative flex-1 min-w-[10rem]">
-        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+    <Card padding="sm" className="flex flex-wrap items-center gap-2.5">
+      <div className="relative min-w-[11rem] flex-1">
+        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <input
           value={searchValue}
           onChange={(e) => setSearchValue(e.target.value)}
           placeholder="Search title, notes, store…"
-          className="w-full pl-8 pr-3 py-1.5 text-sm rounded-md border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          className="w-full rounded-xl border border-border bg-surface py-2 pl-9 pr-3 text-sm placeholder:text-muted-foreground/70 focus:outline-none focus:ring-2 focus:ring-ring"
         />
       </div>
 
       {showStatusFilter && (
-        <select
+        <Select
           value={searchParams.get("status") ?? "wishlist"}
           onChange={(e) => update("status", e.target.value === "wishlist" ? null : e.target.value)}
-          className="text-sm rounded-md border border-slate-300 px-2 py-1.5"
+          className="w-auto py-2"
         >
           <option value="wishlist">Wishlist</option>
           <option value="bought">Bought</option>
           <option value="all">All statuses</option>
-        </select>
+        </Select>
       )}
 
-      <select
-        value={searchParams.get("label") ?? ""}
-        onChange={(e) => update("label", e.target.value || null)}
-        className="text-sm rounded-md border border-slate-300 px-2 py-1.5"
-      >
+      <Select value={searchParams.get("label") ?? ""} onChange={(e) => update("label", e.target.value || null)} className="w-auto py-2">
         <option value="">All labels</option>
         {labels.map((l) => (
           <option key={l.id} value={l.id}>
             {l.name}
           </option>
         ))}
-      </select>
+      </Select>
 
-      <select
-        value={searchParams.get("store") ?? ""}
-        onChange={(e) => update("store", e.target.value || null)}
-        className="text-sm rounded-md border border-slate-300 px-2 py-1.5"
-      >
+      <Select value={searchParams.get("store") ?? ""} onChange={(e) => update("store", e.target.value || null)} className="w-auto py-2">
         <option value="">All stores</option>
         {stores.map((s) => (
           <option key={s} value={s}>
             {s}
           </option>
         ))}
-      </select>
+      </Select>
 
-      <select
+      <Select
         value={searchParams.get("priority") ?? ""}
         onChange={(e) => update("priority", e.target.value || null)}
-        className="text-sm rounded-md border border-slate-300 px-2 py-1.5"
+        className="w-auto py-2"
       >
         <option value="">All priorities</option>
         <option value="high">High</option>
         <option value="medium">Medium</option>
         <option value="low">Low</option>
-      </select>
+      </Select>
 
       {showMissingPriceFilter && (
-        <label className="flex items-center gap-1.5 text-sm text-slate-600 px-1">
+        <label className="flex items-center gap-1.5 whitespace-nowrap px-1 text-sm text-muted-foreground">
           <input
             type="checkbox"
             checked={searchParams.get("missingPrice") === "true"}
             onChange={toggleMissingPrice}
+            className="h-4 w-4 rounded border-border text-accent focus:ring-2 focus:ring-ring"
           />
           Missing price
         </label>
       )}
 
-      <select
+      <Select
         value={searchParams.get("sortBy") ?? "createdAt"}
         onChange={(e) => update("sortBy", e.target.value === "createdAt" ? null : e.target.value)}
-        className="text-sm rounded-md border border-slate-300 px-2 py-1.5"
+        className="w-auto py-2"
       >
         {SORT_OPTIONS.map((o) => (
           <option key={o.value} value={o.value}>
             {o.label}
           </option>
         ))}
-      </select>
+      </Select>
 
       {hasFilters && (
         <button
@@ -139,11 +134,11 @@ export function FiltersBar({ stores, labels, showStatusFilter = false, showMissi
             setSearchValue("");
             router.push(pathname);
           }}
-          className="text-xs text-indigo-600 hover:underline flex items-center gap-1 ml-auto"
+          className="ml-auto flex items-center gap-1 whitespace-nowrap rounded-lg px-2.5 py-1.5 text-xs font-medium text-accent-hover hover:bg-accent-soft"
         >
           <X className="h-3 w-3" /> Clear filters
         </button>
       )}
-    </div>
+    </Card>
   );
 }

@@ -1,5 +1,6 @@
 import { AlertCircle } from "lucide-react";
 import { formatMoney } from "@/lib/money";
+import { Badge } from "./ui/Badge";
 
 interface PriceTagProps {
   originalPrice: string | null;
@@ -11,29 +12,31 @@ interface PriceTagProps {
 
 export function PriceTag({ originalPrice, originalCurrency, convertedPrice, baseCurrency, conversionStatus }: PriceTagProps) {
   if (!originalPrice) {
-    return <span className="text-sm text-slate-400">No price set</span>;
+    return <Badge tone="neutral">No price set</Badge>;
   }
 
   const original = formatMoney(originalPrice, originalCurrency);
 
   if (conversionStatus === "not_needed") {
-    return <span className="text-sm font-medium text-slate-900">{original}</span>;
+    return <span className="text-base font-semibold tabular-nums text-foreground">{original}</span>;
   }
 
   if (convertedPrice && baseCurrency) {
     return (
-      <span className="text-sm">
-        <span className="font-medium text-slate-900">{original}</span>{" "}
-        <span className="text-slate-400">≈ {formatMoney(convertedPrice, baseCurrency)}</span>
+      <span className="flex flex-wrap items-baseline gap-x-1.5">
+        <span className="text-base font-semibold tabular-nums text-foreground">
+          {formatMoney(convertedPrice, baseCurrency)}
+        </span>
+        <span className="text-xs tabular-nums text-muted-foreground">originally {original}</span>
       </span>
     );
   }
 
   return (
-    <span className="text-sm inline-flex items-center gap-1">
-      <span className="font-medium text-slate-900">{original}</span>
+    <span className="flex flex-wrap items-center gap-1.5">
+      <span className="text-base font-semibold tabular-nums text-foreground">{original}</span>
       <span
-        className="inline-flex items-center gap-0.5 text-amber-600 text-xs"
+        className="inline-flex items-center gap-0.5 text-xs font-medium text-amber-600"
         title="Exchange rate unavailable — showing original price only"
       >
         <AlertCircle className="h-3 w-3" />

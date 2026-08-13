@@ -1,26 +1,140 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #faf9f7;
+  --surface: #ffffff;
+  --surface-muted: #f5f4f1;
+  --foreground: #221f1a;
+  --muted-foreground: #78716c;
+
+  --accent: #6366f1;
+  --accent-hover: #4f46e5;
+  --accent-soft: #eef2ff;
+  --accent-foreground: #ffffff;
+
+  --success: #10b981;
+  --success-soft: #ecfdf5;
+  --warning: #f59e0b;
+  --warning-soft: #fffbeb;
+  --destructive: #f43f5e;
+  --destructive-soft: #fff1f2;
+
+  --border: #e7e4de;
+  --ring: #6366f1;
+
+  --shadow-color: 30 25% 40%;
 }
 
 @theme inline {
   --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-surface-muted: var(--surface-muted);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+  --color-muted-foreground: var(--muted-foreground);
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-foreground: var(--accent-foreground);
+
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-destructive: var(--destructive);
+  --color-destructive-soft: var(--destructive-soft);
+
+  --color-border: var(--border);
+  --color-ring: var(--ring);
+
+  --font-sans: var(--font-inter);
+
+  --radius-xl: 0.875rem;
+  --radius-2xl: 1.25rem;
+
+  --shadow-soft: 0 1px 2px hsl(var(--shadow-color) / 0.06), 0 8px 24px -8px hsl(var(--shadow-color) / 0.12);
+  --shadow-soft-lg: 0 2px 4px hsl(var(--shadow-color) / 0.06), 0 16px 40px -12px hsl(var(--shadow-color) / 0.16);
+
+  --animate-shimmer: shimmer 1.8s ease-in-out infinite;
+  --animate-fade-in: fade-in 0.15s ease-out;
+  --animate-scale-in: scale-in 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+  --animate-slide-up: slide-up 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+
+  @keyframes shimmer {
+    0% {
+      background-position: -200% 0;
+    }
+    100% {
+      background-position: 200% 0;
+    }
+  }
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+  @keyframes scale-in {
+    from {
+      opacity: 0;
+      transform: scale(0.96) translateY(4px);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1) translateY(0);
+    }
+  }
+  @keyframes slide-up {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-feature-settings: "cv11", "ss01";
+}
+
+* {
+  border-color: var(--border);
+}
+
+::selection {
+  background: var(--accent-soft);
+  color: var(--accent-hover);
+}
+
+/* Slim, unobtrusive scrollbars that still work in the default UA style */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 999px;
+  border: 2px solid var(--background);
+}
+
+@layer utilities {
+  .shimmer {
+    background: linear-gradient(90deg, var(--surface-muted) 25%, #ececea 37%, var(--surface-muted) 63%);
+    background-size: 400% 100%;
+    animation: var(--animate-shimmer);
+  }
 }

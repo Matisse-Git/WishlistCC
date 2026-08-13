@@ -1,10 +1,12 @@
 import Link from "next/link";
+import { SearchX } from "lucide-react";
 import { listItems, getDistinctStores, type SortOption } from "@/lib/items";
 import { listLabels } from "@/lib/labels";
 import { AddItemBar } from "@/components/AddItemBar";
 import { FiltersBar } from "@/components/FiltersBar";
 import { ItemsGrid } from "@/components/ItemsGrid";
 import { EmptyState } from "@/components/EmptyState";
+import { PageHeader } from "@/components/ui/PageHeader";
 
 export const dynamic = "force-dynamic";
 
@@ -51,12 +53,10 @@ export default async function ItemsPage({
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-xl font-semibold text-slate-900">Wishlist</h1>
-        <p className="text-sm text-slate-500 mt-1">
-          {result.total} item{result.total === 1 ? "" : "s"}
-        </p>
-      </div>
+      <PageHeader
+        title="Wishlist"
+        subtitle={`${result.total} item${result.total === 1 ? "" : "s"}`}
+      />
 
       <AddItemBar />
       <FiltersBar stores={stores} labels={labels} showStatusFilter />
@@ -64,10 +64,14 @@ export default async function ItemsPage({
       {result.items.length === 0 ? (
         hasAnyFilter ? (
           <EmptyState
+            icon={SearchX}
             title="No items match your filters"
-            description="Try adjusting or clearing your filters."
+            description="Try adjusting or clearing your filters to see more of your wishlist."
             action={
-              <Link href="/items" className="text-indigo-600 text-sm hover:underline">
+              <Link
+                href="/items"
+                className="inline-flex h-10 items-center justify-center rounded-xl border border-border bg-surface px-4 text-sm font-medium text-foreground shadow-sm hover:bg-surface-muted"
+              >
                 Clear filters
               </Link>
             }
@@ -75,7 +79,7 @@ export default async function ItemsPage({
         ) : (
           <EmptyState
             title="Your wishlist is empty"
-            description="Paste a product URL above to add your first item — or add one manually."
+            description="Paste a product link above to add your first item — or add one manually."
           />
         )
       ) : (

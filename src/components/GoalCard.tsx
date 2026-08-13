@@ -1,30 +1,34 @@
-import { Target } from "lucide-react";
+import { PartyPopper, Target } from "lucide-react";
 import { formatMoney, formatPercent } from "@/lib/money";
 import Decimal from "decimal.js";
+import { Card } from "./ui/Card";
+import { Progress } from "./ui/Progress";
+import { Badge } from "./ui/Badge";
 
 interface GoalCardProps {
   baseCurrency: string;
   goalAmount: string | null;
   savedAmount: string | null;
   activeWishlistTotal: string;
+  className?: string;
 }
 
-export function GoalCard({ baseCurrency, goalAmount, savedAmount, activeWishlistTotal }: GoalCardProps) {
+export function GoalCard({ baseCurrency, goalAmount, savedAmount, activeWishlistTotal, className }: GoalCardProps) {
   if (!goalAmount) {
     return (
-      <div className="bg-white border border-slate-200 rounded-xl p-4">
-        <div className="flex items-center gap-1.5 text-xs font-medium text-slate-500">
-          <Target className="h-4 w-4 text-slate-300" />
+      <Card className={className}>
+        <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+          <Target className="h-4 w-4" />
           Savings goal
         </div>
-        <p className="text-sm text-slate-400 mt-2">
+        <p className="mt-2 text-sm text-muted-foreground">
           No goal set yet.{" "}
-          <a href="/settings" className="text-indigo-600 hover:underline">
+          <a href="/settings" className="font-medium text-accent-hover hover:underline">
             Set one in Settings
           </a>
           .
         </p>
-      </div>
+      </Card>
     );
   }
 
@@ -36,38 +40,40 @@ export function GoalCard({ baseCurrency, goalAmount, savedAmount, activeWishlist
   const remainingWishlist = Decimal.max(0, new Decimal(activeWishlistTotal).minus(saved));
 
   return (
-    <div className="bg-white border border-slate-200 rounded-xl p-4 sm:col-span-2">
+    <Card className={className}>
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-1.5 text-xs font-medium text-slate-500">
-          <Target className="h-4 w-4 text-slate-300" />
+        <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+          <Target className="h-4 w-4" />
           Savings goal
         </div>
         {reached && (
-          <span className="text-xs font-medium text-emerald-700 bg-emerald-50 rounded-full px-2 py-0.5">
-            Goal reached 🎉
-          </span>
+          <Badge tone="success">
+            <PartyPopper className="h-3 w-3" />
+            Goal reached
+          </Badge>
         )}
       </div>
 
       <div className="mt-2 flex items-baseline gap-2">
-        <span className="text-2xl font-semibold text-slate-900">{formatMoney(saved, baseCurrency)}</span>
-        <span className="text-sm text-slate-400">of {formatMoney(goal, baseCurrency)}</span>
+        <span className="text-2xl font-semibold tabular-nums tracking-tight text-foreground">
+          {formatMoney(saved, baseCurrency)}
+        </span>
+        <span className="text-sm text-muted-foreground">of {formatMoney(goal, baseCurrency)}</span>
       </div>
 
-      <div className="mt-2 h-2 rounded-full bg-slate-100 overflow-hidden">
-        <div
-          className="h-full bg-indigo-600 rounded-full transition-all"
-          style={{ width: `${ratio * 100}%` }}
-        />
-      </div>
+      <Progress
+        value={ratio * 100}
+        className="mt-3"
+        barClassName={reached ? "bg-success" : "bg-gradient-to-r from-accent to-violet-500"}
+      />
 
-      <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-500">
-        <span>{formatPercent(ratio)} funded</span>
+      <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+        <span className="font-medium text-foreground">{formatPercent(ratio)} funded</span>
         {!reached && <span>{formatMoney(remaining, baseCurrency)} remaining</span>}
         {remainingWishlist.greaterThan(0) && (
           <span>{formatMoney(remainingWishlist, baseCurrency)} of wishlist still unfunded</span>
         )}
       </div>
-    </div>
+    </Card>
   );
 }

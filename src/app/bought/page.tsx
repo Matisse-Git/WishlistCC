@@ -7,7 +7,8 @@ import { FiltersBar } from "@/components/FiltersBar";
 import { ItemsGrid } from "@/components/ItemsGrid";
 import { EmptyState } from "@/components/EmptyState";
 import { StatCard } from "@/components/StatCard";
-import { ShoppingBag, CalendarClock } from "lucide-react";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { ShoppingBag, CalendarClock, SearchX } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -55,19 +56,20 @@ export default async function BoughtPage({
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-xl font-semibold text-slate-900">Bought</h1>
-        <p className="text-sm text-slate-500 mt-1">
-          {result.total} item{result.total === 1 ? "" : "s"} purchased
-        </p>
-      </div>
+      <PageHeader title="Bought" subtitle={`${result.total} item${result.total === 1 ? "" : "s"} purchased`} />
 
       <div className="grid grid-cols-2 gap-4">
-        <StatCard label="Total spent" value={formatMoney(stats.boughtTotal, settings.baseCurrency)} icon={ShoppingBag} />
+        <StatCard
+          label="Total spent"
+          value={formatMoney(stats.boughtTotal, settings.baseCurrency)}
+          icon={ShoppingBag}
+          tone="success"
+        />
         <StatCard
           label="Spent this month"
           value={formatMoney(stats.boughtTotalThisMonth, settings.baseCurrency)}
           icon={CalendarClock}
+          tone="accent"
         />
       </div>
 
@@ -76,18 +78,31 @@ export default async function BoughtPage({
       {result.items.length === 0 ? (
         hasAnyFilter ? (
           <EmptyState
+            icon={SearchX}
             title="No bought items match your filters"
             description="Try adjusting or clearing your filters."
             action={
-              <Link href="/bought" className="text-indigo-600 text-sm hover:underline">
+              <Link
+                href="/bought"
+                className="inline-flex h-10 items-center justify-center rounded-xl border border-border bg-surface px-4 text-sm font-medium text-foreground shadow-sm hover:bg-surface-muted"
+              >
                 Clear filters
               </Link>
             }
           />
         ) : (
           <EmptyState
+            icon={ShoppingBag}
             title="Nothing bought yet"
             description="Items you mark as bought from your wishlist will show up here."
+            action={
+              <Link
+                href="/items"
+                className="inline-flex h-10 items-center justify-center rounded-xl bg-accent px-4 text-sm font-medium text-accent-foreground shadow-sm hover:bg-accent-hover"
+              >
+                Go to wishlist
+              </Link>
+            }
           />
         )
       ) : (

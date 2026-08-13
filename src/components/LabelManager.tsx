@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { Trash2, Plus, Tag } from "lucide-react";
 import { Button } from "./ui/Button";
 import { ConfirmDialog } from "./ui/ConfirmDialog";
+import { Input } from "./ui/Input";
+import { SettingsSection } from "./ui/SettingsSection";
 import { useToast } from "./ToastProvider";
 import type { SerializedLabelFull } from "@/lib/labels";
 
@@ -57,19 +59,9 @@ export function LabelManager({ initialLabels }: { initialLabels: SerializedLabel
   }
 
   return (
-    <div className="bg-white border border-slate-200 rounded-xl p-5 space-y-4">
-      <h2 className="font-medium text-slate-900 flex items-center gap-1.5">
-        <Tag className="h-4 w-4" />
-        Labels
-      </h2>
-
+    <SettingsSection title="Labels" icon={Tag} description="Organize your wishlist with custom tags.">
       <form onSubmit={handleCreate} className="flex gap-2">
-        <input
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="New label name"
-          className="flex-1 rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-        />
+        <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="New label name" />
         <Button type="submit" variant="secondary" loading={creating}>
           <Plus className="h-4 w-4" />
           Add
@@ -77,20 +69,20 @@ export function LabelManager({ initialLabels }: { initialLabels: SerializedLabel
       </form>
 
       {labels.length === 0 ? (
-        <p className="text-sm text-slate-500">No labels yet.</p>
+        <p className="text-sm text-muted-foreground">No labels yet.</p>
       ) : (
-        <ul className="divide-y divide-slate-100">
+        <ul className="divide-y divide-border">
           {labels.map((label) => (
-            <li key={label.id} className="flex items-center justify-between py-2">
+            <li key={label.id} className="flex items-center justify-between py-2.5">
               <div className="flex items-center gap-2 text-sm">
-                <span className="font-medium text-slate-800">{label.name}</span>
-                <span className="text-slate-400">
+                <span className="font-medium text-foreground">{label.name}</span>
+                <span className="text-muted-foreground">
                   {label.itemCount} item{label.itemCount === 1 ? "" : "s"}
                 </span>
               </div>
               <button
                 onClick={() => setPendingDelete(label)}
-                className="text-slate-400 hover:text-red-600"
+                className="rounded-lg p-1.5 text-muted-foreground hover:bg-destructive-soft hover:text-destructive"
                 aria-label={`Delete ${label.name}`}
               >
                 <Trash2 className="h-4 w-4" />
@@ -109,6 +101,6 @@ export function LabelManager({ initialLabels }: { initialLabels: SerializedLabel
         onConfirm={handleDelete}
         onCancel={() => setPendingDelete(null)}
       />
-    </div>
+    </SettingsSection>
   );
 }

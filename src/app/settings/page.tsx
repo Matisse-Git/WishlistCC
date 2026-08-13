@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { SettingsForm } from "@/components/SettingsForm";
 import { LabelManager } from "@/components/LabelManager";
 import { listLabels } from "@/lib/labels";
+import { PageHeader } from "@/components/ui/PageHeader";
 
 export const dynamic = "force-dynamic";
 
@@ -14,13 +15,8 @@ export default async function SettingsPage() {
   const labels = await listLabels();
 
   return (
-    <div className="max-w-2xl space-y-8">
-      <div>
-        <h1 className="text-xl font-semibold text-slate-900">Settings</h1>
-        <p className="text-sm text-slate-500 mt-1">
-          Configure your base currency, savings goal, and manage exchange rates.
-        </p>
-      </div>
+    <div className="max-w-2xl space-y-6">
+      <PageHeader title="Settings" subtitle="Configure your base currency, savings goal, and manage exchange rates." />
 
       <SettingsForm
         initialSettings={serializeSettings(settings)}

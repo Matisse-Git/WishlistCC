@@ -2,10 +2,12 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { RefreshCw, Save, AlertTriangle } from "lucide-react";
+import { RefreshCw, Save, AlertTriangle, SlidersHorizontal, Target, Landmark } from "lucide-react";
 import { Button } from "./ui/Button";
 import { CurrencySelect } from "./ui/CurrencySelect";
 import { ConfirmDialog } from "./ui/ConfirmDialog";
+import { Input, Label } from "./ui/Input";
+import { SettingsSection } from "./ui/SettingsSection";
 import { useToast } from "./ToastProvider";
 import { formatDateTime } from "@/lib/dates";
 import type { SerializedSettings } from "@/lib/settings";
@@ -89,81 +91,83 @@ export function SettingsForm({
 
   return (
     <>
-      <form onSubmit={handleSave} className="bg-white border border-slate-200 rounded-xl p-5 space-y-5">
-        <h2 className="font-medium text-slate-900">General</h2>
-
-        <div className="grid sm:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Base currency</label>
-            <CurrencySelect value={baseCurrency} onChange={setBaseCurrency} className="w-full" />
-            <p className="text-xs text-slate-500 mt-1">All totals and converted prices use this currency.</p>
+      <form onSubmit={handleSave}>
+        <SettingsSection
+          title="General"
+          icon={SlidersHorizontal}
+          description="Choose the currency used for totals and converted prices."
+          footer={
+            <Button type="submit" variant="primary" loading={saving}>
+              <Save className="h-4 w-4" />
+              Save settings
+            </Button>
+          }
+        >
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <Label htmlFor="base-currency">Base currency</Label>
+              <CurrencySelect id="base-currency" value={baseCurrency} onChange={setBaseCurrency} className="w-full" />
+            </div>
           </div>
-        </div>
 
-        <div className="grid sm:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Savings goal amount</label>
-            <input
-              type="number"
-              min="0"
-              step="0.01"
-              value={goalAmount}
-              onChange={(e) => setGoalAmount(e.target.value)}
-              placeholder="e.g. 1000"
-              className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            />
+          <div className="grid gap-4 pt-1 sm:grid-cols-2">
+            <div>
+              <Label htmlFor="goal-amount">
+                <span className="inline-flex items-center gap-1.5">
+                  <Target className="h-3.5 w-3.5 text-muted-foreground" />
+                  Savings goal amount
+                </span>
+              </Label>
+              <Input
+                id="goal-amount"
+                type="number"
+                min="0"
+                step="0.01"
+                value={goalAmount}
+                onChange={(e) => setGoalAmount(e.target.value)}
+                placeholder="e.g. 1000"
+              />
+            </div>
+            <div>
+              <Label htmlFor="saved-amount">Amount saved so far</Label>
+              <Input
+                id="saved-amount"
+                type="number"
+                min="0"
+                step="0.01"
+                value={savedAmount}
+                onChange={(e) => setSavedAmount(e.target.value)}
+                placeholder="e.g. 250"
+              />
+            </div>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Amount saved so far</label>
-            <input
-              type="number"
-              min="0"
-              step="0.01"
-              value={savedAmount}
-              onChange={(e) => setSavedAmount(e.target.value)}
-              placeholder="e.g. 250"
-              className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            />
-          </div>
-        </div>
-
-        <div className="flex justify-end">
-          <Button type="submit" variant="primary" loading={saving}>
-            <Save className="h-4 w-4" />
-            Save settings
-          </Button>
-        </div>
+        </SettingsSection>
       </form>
 
-      <div className="bg-white border border-slate-200 rounded-xl p-5 space-y-3">
-        <h2 className="font-medium text-slate-900">Exchange rates</h2>
+      <SettingsSection title="Exchange rates" icon={Landmark} description="Rates are cached and refreshed on demand.">
         {rateInfo ? (
-          <p className="text-sm text-slate-500">
-            Last fetched {formatDateTime(rateInfo.fetchedAt)} · expires{" "}
-            {formatDateTime(rateInfo.expiresAt)}
+          <p className="text-sm text-muted-foreground">
+            Last fetched {formatDateTime(rateInfo.fetchedAt)} · expires {formatDateTime(rateInfo.expiresAt)}
           </p>
         ) : (
-          <p className="text-sm text-slate-500">No rates cached yet for {baseCurrency}.</p>
+          <p className="text-sm text-muted-foreground">No rates cached yet for {baseCurrency}.</p>
         )}
         <Button variant="secondary" onClick={handleRefreshRates} loading={refreshing}>
           <RefreshCw className="h-4 w-4" />
           Refresh exchange rates
         </Button>
-      </div>
+      </SettingsSection>
 
-      <div className="bg-white border border-red-200 rounded-xl p-5 space-y-3">
-        <h2 className="font-medium text-red-700 flex items-center gap-1.5">
-          <AlertTriangle className="h-4 w-4" />
-          Danger zone
-        </h2>
-        <p className="text-sm text-slate-500">
-          Permanently delete all items, labels, and cached exchange rates, and reset settings to defaults. This
-          cannot be undone.
-        </p>
+      <SettingsSection
+        title="Danger zone"
+        icon={AlertTriangle}
+        danger
+        description="Permanently delete all items, labels, and cached exchange rates, and reset settings to defaults. This cannot be undone."
+      >
         <Button variant="danger" onClick={() => setConfirmReset(true)}>
           Reset all data
         </Button>
-      </div>
+      </SettingsSection>
 
       <ConfirmDialog
         open={confirmReset}

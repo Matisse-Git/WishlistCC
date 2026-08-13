@@ -1,15 +1,19 @@
 "use client";
 
-import { Pencil, ShoppingCart, Trash2, ExternalLink } from "lucide-react";
+import { Pencil, ShoppingCart, Trash2, ExternalLink, CheckCircle2 } from "lucide-react";
 import { PriceTag } from "./PriceTag";
+import { Badge } from "./ui/Badge";
+import { IconButton } from "./ui/IconButton";
+import { ImageThumbnail } from "./ui/ImageThumbnail";
+import { Card } from "./ui/Card";
 import { formatMoney } from "@/lib/money";
 import { formatDate } from "@/lib/dates";
 import type { SerializedItem } from "@/lib/items";
 
-const PRIORITY_STYLES: Record<string, string> = {
-  high: "bg-red-50 text-red-700",
-  medium: "bg-amber-50 text-amber-700",
-  low: "bg-slate-100 text-slate-600",
+const PRIORITY_TONE: Record<string, "destructive" | "warning" | "neutral"> = {
+  high: "destructive",
+  medium: "warning",
+  low: "neutral",
 };
 
 interface ItemCardProps {
@@ -23,62 +27,60 @@ export function ItemCard({ item, onEdit, onMarkBought, onDelete }: ItemCardProps
   const isBought = item.status === "bought";
 
   return (
-    <div className="bg-white border border-slate-200 rounded-xl overflow-hidden flex flex-col">
-      <div className="aspect-[4/3] bg-slate-100 flex items-center justify-center overflow-hidden">
-        {item.imageUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={item.imageUrl}
-            alt={item.title}
-            referrerPolicy="no-referrer"
-            className="w-full h-full object-cover"
-            onError={(e) => {
-              (e.currentTarget as HTMLImageElement).style.display = "none";
-            }}
-          />
-        ) : (
-          <span className="text-slate-300 text-xs">No image</span>
+    <Card hover padding="none" className="group flex flex-col overflow-hidden">
+      <div className="relative">
+        <ImageThumbnail src={item.imageUrl} alt={item.title} className="aspect-[4/3] w-full" />
+        {isBought && (
+          <div className="absolute left-2.5 top-2.5">
+            <Badge tone="success" className="bg-white/90 shadow-sm backdrop-blur">
+              <CheckCircle2 className="h-3 w-3" />
+              Bought
+            </Badge>
+          </div>
+        )}
+        {!isBought && item.priority && (
+          <div className="absolute left-2.5 top-2.5">
+            <Badge tone={PRIORITY_TONE[item.priority]} className="bg-white/90 capitalize shadow-sm backdrop-blur">
+              {item.priority}
+            </Badge>
+          </div>
         )}
       </div>
 
-      <div className="p-3.5 flex-1 flex flex-col gap-2">
-        <div className="flex items-start justify-between gap-2">
-          <h3 className="text-sm font-medium text-slate-900 line-clamp-2" title={item.title}>
-            {item.url ? (
-              <a href={item.url} target="_blank" rel="noopener noreferrer" className="hover:underline inline-flex gap-1">
-                {item.title}
-                <ExternalLink className="h-3 w-3 shrink-0 mt-0.5 text-slate-400" />
-              </a>
-            ) : (
-              item.title
-            )}
-          </h3>
-          {item.priority && (
-            <span className={`shrink-0 text-[10px] font-medium uppercase rounded px-1.5 py-0.5 ${PRIORITY_STYLES[item.priority]}`}>
-              {item.priority}
-            </span>
+      <div className={`flex flex-1 flex-col gap-2 p-4 ${isBought ? "opacity-90" : ""}`}>
+        <h3 className="line-clamp-2 text-sm font-semibold leading-snug text-foreground" title={item.title}>
+          {item.url ? (
+            <a
+              href={item.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-start gap-1 hover:text-accent-hover hover:underline"
+            >
+              {item.title}
+              <ExternalLink className="mt-0.5 h-3 w-3 shrink-0 text-muted-foreground" />
+            </a>
+          ) : (
+            item.title
           )}
-        </div>
+        </h3>
 
-        {item.store && <p className="text-xs text-slate-400">{item.store}</p>}
+        {item.store && <p className="text-xs text-muted-foreground">{item.store}</p>}
 
         {isBought ? (
           <div className="text-sm">
-            <div>
-              <span className="font-medium text-slate-900">
+            <div className="flex items-baseline gap-1.5">
+              <span className="text-base font-semibold tabular-nums text-foreground">
                 {formatMoney(item.boughtPrice, item.boughtCurrency)}
               </span>
-              {item.boughtAt && (
-                <span className="text-slate-400"> · {formatDate(item.boughtAt)}</span>
-              )}
+              {item.boughtAt && <span className="text-xs text-muted-foreground">{formatDate(item.boughtAt)}</span>}
             </div>
             {item.originalPrice &&
               (item.boughtPrice !== item.originalPrice || item.boughtCurrency !== item.originalCurrency) && (
-                <div className="text-xs text-slate-400">
+                <div className="text-xs tabular-nums text-muted-foreground">
                   Wishlist price: {formatMoney(item.originalPrice, item.originalCurrency)}
                 </div>
               )}
-            {item.notes && <p className="text-xs text-slate-500 line-clamp-2 mt-0.5">{item.notes}</p>}
+            {item.notes && <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">{item.notes}</p>}
           </div>
         ) : (
           <PriceTag
@@ -91,36 +93,36 @@ export function ItemCard({ item, onEdit, onMarkBought, onDelete }: ItemCardProps
         )}
 
         {item.labels.length > 0 && (
-          <div className="flex flex-wrap gap-1">
+          <div className="flex flex-wrap gap-1.5">
             {item.labels.map((l) => (
-              <span key={l.id} className="text-[10px] rounded-full bg-slate-100 text-slate-600 px-2 py-0.5">
+              <Badge key={l.id} tone="accent">
                 {l.name}
-              </span>
+              </Badge>
             ))}
           </div>
         )}
 
-        <div className="mt-auto pt-2 flex items-center justify-between text-xs text-slate-400">
-          <span>{formatDate(item.createdAt)}</span>
-          <div className="flex items-center gap-2.5">
+        <div className="mt-auto flex items-center justify-between pt-2.5">
+          <span className="text-xs text-muted-foreground">{formatDate(item.createdAt)}</span>
+          <div className="flex items-center gap-0.5">
             {onEdit && (
-              <button onClick={() => onEdit(item)} className="hover:text-slate-700" aria-label="Edit">
+              <IconButton onClick={() => onEdit(item)} aria-label="Edit item">
                 <Pencil className="h-3.5 w-3.5" />
-              </button>
+              </IconButton>
             )}
             {onMarkBought && !isBought && (
-              <button onClick={() => onMarkBought(item)} className="hover:text-emerald-600" aria-label="Mark bought">
+              <IconButton variant="success" onClick={() => onMarkBought(item)} aria-label="Mark as bought">
                 <ShoppingCart className="h-3.5 w-3.5" />
-              </button>
+              </IconButton>
             )}
             {onDelete && (
-              <button onClick={() => onDelete(item)} className="hover:text-red-600" aria-label="Delete">
+              <IconButton variant="danger" onClick={() => onDelete(item)} aria-label="Delete item">
                 <Trash2 className="h-3.5 w-3.5" />
-              </button>
+              </IconButton>
             )}
           </div>
         </div>
       </div>
-    </div>
+    </Card>
   );
 }

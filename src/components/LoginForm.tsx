@@ -3,6 +3,9 @@
 import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Gift } from "lucide-react";
+import { Button } from "./ui/Button";
+import { Input, Label } from "./ui/Input";
+import { Card } from "./ui/Card";
 
 export function LoginForm() {
   const router = useRouter();
@@ -35,30 +38,36 @@ export function LoginForm() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50 px-4">
-      <form onSubmit={handleSubmit} className="bg-white border border-slate-200 rounded-xl p-6 w-full max-w-sm space-y-4">
-        <div className="flex items-center gap-1.5 font-semibold text-slate-900">
-          <Gift className="h-5 w-5 text-indigo-600" />
-          WishListCC
-        </div>
-        <p className="text-sm text-slate-500">Enter the password to continue.</p>
-        <input
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          autoFocus
-          placeholder="Password"
-          className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-        />
-        {error && <p className="text-sm text-red-600">{error}</p>}
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full rounded-md bg-indigo-600 text-white py-2 text-sm font-medium hover:bg-indigo-700 disabled:opacity-50"
-        >
-          {loading ? "Checking…" : "Continue"}
-        </button>
-      </form>
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-accent-soft/60 to-background px-4">
+      <Card padding="lg" className="w-full max-w-sm">
+        <form onSubmit={handleSubmit} className="space-y-5">
+          <div className="flex flex-col items-center text-center">
+            <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-accent to-violet-500 text-white shadow-sm">
+              <Gift className="h-5 w-5" />
+            </span>
+            <h1 className="mt-3 text-base font-semibold text-foreground">WishListCC</h1>
+            <p className="mt-1 text-sm text-muted-foreground">Enter the password to continue.</p>
+          </div>
+
+          <div>
+            <Label htmlFor="login-password">Password</Label>
+            <Input
+              id="login-password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              autoFocus
+              placeholder="Password"
+            />
+          </div>
+
+          {error && <p className="text-sm text-destructive">{error}</p>}
+
+          <Button type="submit" variant="primary" loading={loading} className="w-full">
+            Continue
+          </Button>
+        </form>
+      </Card>
     </div>
   );
 }
