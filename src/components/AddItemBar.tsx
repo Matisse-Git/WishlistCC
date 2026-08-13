@@ -41,6 +41,7 @@ export function AddItemBar() {
         originalPrice: data.price ?? "",
         originalCurrency: data.currency ?? "USD",
         store: data.store ?? "",
+        debug: data.debug ?? null,
       });
       setWarnings(data.warnings ?? []);
       setModalOpen(true);

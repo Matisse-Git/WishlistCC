@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { AlertTriangle, Wand2, ImageOff } from "lucide-react";
+import { AlertTriangle, Wand2, ImageOff, ChevronDown, ChevronRight } from "lucide-react";
 import { Modal } from "./ui/Modal";
 import { Button } from "./ui/Button";
 import { CurrencySelect } from "./ui/CurrencySelect";
@@ -9,6 +9,7 @@ import { Input, Textarea, Select, Label } from "./ui/Input";
 import { LabelPicker } from "./LabelPicker";
 import { useToast } from "./ToastProvider";
 import type { SerializedItem } from "@/lib/items";
+import type { ExtractionDebugInfo } from "@/lib/scrape/types";
 
 export interface ItemFormInitial {
   id?: string;
@@ -26,6 +27,7 @@ export interface ItemFormInitial {
   notes?: string | null;
   status?: string;
   labels?: string[];
+  debug?: ExtractionDebugInfo | null;
 }
 
 interface ItemFormModalProps {
@@ -57,7 +59,9 @@ export function ItemFormModal({ open, onClose, mode, initial, warnings, onSaved 
   const [saving, setSaving] = useState(false);
   const [fetchingPreview, setFetchingPreview] = useState(false);
   const [localWarnings, setLocalWarnings] = useState<string[]>(warnings ?? []);
-  const [imageErrored, setImageErrored] = useState(false);
+  const [imageStage, setImageStage] = useState<"direct" | "proxy" | "failed">("direct");
+  const [showExtractionDetails, setShowExtractionDetails] = useState(false);
+  const [extractionDebug, setExtractionDebug] = useState<ExtractionDebugInfo | null>(null);
 
   // Reset the form whenever the modal transitions to open, adjusted during
   // render (React's recommended pattern) rather than in an effect, so the
@@ -81,13 +85,15 @@ export function ItemFormModal({ open, onClose, mode, initial, warnings, onSaved 
         labels: initial?.labels ?? [],
       });
       setLocalWarnings(warnings ?? []);
-      setImageErrored(false);
+      setImageStage("direct");
+      setShowExtractionDetails(false);
+      setExtractionDebug(initial?.debug ?? null);
     }
   }
 
   function set<K extends keyof ReturnType<typeof emptyState>>(key: K, value: ReturnType<typeof emptyState>[K]) {
     setForm((prev) => ({ ...prev, [key]: value }));
-    if (key === "imageUrl") setImageErrored(false);
+    if (key === "imageUrl") setImageStage("direct");
   }
 
   async function handleFetchDetails() {
@@ -116,10 +122,13 @@ export function ItemFormModal({ open, onClose, mode, initial, warnings, onSaved 
         store: prev.store || data.store || "",
       }));
       setLocalWarnings(data.warnings ?? []);
-      setImageErrored(false);
+      setImageStage("direct");
+      setExtractionDebug(data.debug ?? null);
       if (!data.warnings?.length) showToast("Details fetched.", "success");
+      else if (data.title || data.price || data.imageUrl) showToast("Found some details — check the form below.", "success");
     } catch (err) {
       setLocalWarnings(["Couldn't fetch details from that link. You can still fill the item in manually."]);
+      setExtractionDebug(null);
       showToast(err instanceof Error ? err.message : "Failed to fetch details", "error");
     } finally {
       setFetchingPreview(false);
@@ -223,6 +232,17 @@ export function ItemFormModal({ open, onClose, mode, initial, warnings, onSaved 
           <p className="mt-1.5 text-xs text-muted-foreground">
             We&rsquo;ll try to automatically fill the image, title, and price.
           </p>
+          {extractionDebug && (
+            <button
+              type="button"
+              onClick={() => setShowExtractionDetails((v) => !v)}
+              className="mt-1.5 flex items-center gap-1 text-xs font-medium text-accent-hover hover:underline"
+            >
+              {showExtractionDetails ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
+              Show extraction details
+            </button>
+          )}
+          {showExtractionDetails && extractionDebug && <ExtractionDetails debug={extractionDebug} />}
         </div>
 
         <div className="grid grid-cols-[1fr_auto] gap-4">
@@ -238,14 +258,19 @@ export function ItemFormModal({ open, onClose, mode, initial, warnings, onSaved 
           </div>
           <div className="pt-6">
             <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-xl border border-border bg-surface-muted">
-              {form.imageUrl && !imageErrored ? (
+              {form.imageUrl && imageStage !== "failed" ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
-                  src={form.imageUrl}
+                  key={imageStage === "proxy" ? `proxy:${form.imageUrl}` : form.imageUrl}
+                  src={
+                    imageStage === "proxy"
+                      ? `/api/image-proxy?url=${encodeURIComponent(form.imageUrl)}`
+                      : form.imageUrl
+                  }
                   alt=""
                   referrerPolicy="no-referrer"
                   className="h-full w-full object-cover"
-                  onError={() => setImageErrored(true)}
+                  onError={() => setImageStage((prev) => (prev === "direct" ? "proxy" : "failed"))}
                 />
               ) : (
                 <ImageOff className="h-5 w-5 text-muted-foreground/40" strokeWidth={1.5} />
@@ -253,6 +278,12 @@ export function ItemFormModal({ open, onClose, mode, initial, warnings, onSaved 
             </div>
           </div>
         </div>
+        {form.imageUrl && imageStage === "failed" && (
+          <p className="-mt-3 flex items-center gap-1.5 text-xs text-amber-700">
+            <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+            Couldn&rsquo;t load that image — it may be blocked by the source site. Try pasting a direct image URL.
+          </p>
+        )}
 
         <div>
           <Label htmlFor="item-description">Description</Label>
@@ -319,5 +350,42 @@ export function ItemFormModal({ open, onClose, mode, initial, warnings, onSaved 
         </div>
       </form>
     </Modal>
+  );
+}
+
+/** Compact read-only summary of what the extraction pipeline found and picked, for troubleshooting a specific link. */
+function ExtractionDetails({ debug }: { debug: ExtractionDebugInfo }) {
+  return (
+    <div className="mt-2 space-y-2 rounded-xl border border-border bg-surface-muted px-3.5 py-3 text-xs">
+      <Row label="Fetch status" value={debug.fetch.status?.toString() ?? "—"} />
+      <Row label="JSON-LD blocks" value={`${debug.jsonLdBlocksFound} found, ${debug.jsonLdParseErrors} failed to parse`} />
+      <Row label="Open Graph tags" value={debug.openGraphTagsFound.join(", ") || "none"} />
+      <Row label="Microdata" value={debug.microdataFound ? "found" : "not found"} />
+      <Row
+        label="Image"
+        value={
+          debug.selectedImageSource
+            ? `selected from ${debug.selectedImageSource} (${debug.imageAlternates.length} other candidate(s))`
+            : debug.imageRejectionReason ?? "not found"
+        }
+      />
+      <Row
+        label="Price"
+        value={
+          debug.selectedPriceSource
+            ? `selected from ${debug.selectedPriceSource} (${debug.priceAlternates.length} other candidate(s))`
+            : debug.priceRejectionReason ?? "not found"
+        }
+      />
+    </div>
+  );
+}
+
+function Row({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex gap-2">
+      <span className="w-28 shrink-0 text-muted-foreground">{label}</span>
+      <span className="min-w-0 flex-1 text-foreground">{value}</span>
+    </div>
   );
 }
