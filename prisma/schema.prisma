@@ -1,0 +1,85 @@
+// Prisma schema for WishListCC — a personal wishlist app.
+// Default datasource is SQLite for cheap/free local development.
+// See README.md "Deploying with PostgreSQL" for how to switch providers.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+// Singleton row (id always 1) holding user-wide preferences.
+model Setting {
+  id           Int      @id @default(autoincrement())
+  baseCurrency String   @default("USD")
+  goalAmount   Decimal?
+  savedAmount  Decimal?
+  updatedAt    DateTime @updatedAt
+}
+
+model Label {
+  id        String      @id @default(cuid())
+  name      String      @unique
+  color     String?
+  createdAt DateTime    @default(now())
+  items     ItemLabel[]
+}
+
+model Item {
+  id     String  @id @default(cuid())
+  url    String?
+  title  String
+  description String?
+  imageUrl    String?
+
+  originalPrice    Decimal?
+  originalCurrency String?
+  convertedPrice   Decimal?
+  baseCurrency     String?
+  // "success" | "missing_rate" | "manual" | "not_needed" | "unknown"
+  conversionStatus String @default("unknown")
+
+  // "wishlist" | "bought"
+  status   String @default("wishlist")
+  // "low" | "medium" | "high"
+  priority String?
+
+  store String?
+  notes String?
+
+  boughtAt       DateTime?
+  boughtPrice    Decimal?
+  boughtCurrency String?
+
+  rawMetadata Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  labels ItemLabel[]
+
+  @@index([status])
+  @@index([createdAt])
+}
+
+model ItemLabel {
+  itemId  String
+  labelId String
+
+  item  Item  @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  label Label @relation(fields: [labelId], references: [id], onDelete: Cascade)
+
+  @@id([itemId, labelId])
+  @@index([labelId])
+}
+
+model ExchangeRateCache {
+  id           String   @id @default(cuid())
+  baseCurrency String   @unique
+  rates        Json
+  fetchedAt    DateTime @default(now())
+  expiresAt    DateTime
+}
