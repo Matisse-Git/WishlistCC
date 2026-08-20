@@ -1,15 +1,8 @@
 import { PrismaClient } from "@/generated/prisma/client";
-import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
+import { PrismaPg } from "@prisma/adapter-pg";
 
-// Prisma 7 requires an explicit driver adapter. This project defaults to
-// SQLite for cheap/free local development. To deploy against Postgres,
-// see the "Deploying with PostgreSQL" section in README.md — it requires
-// swapping both the adapter below and the `datasource` provider in
-// prisma/schema.prisma, since the SQL dialect is fixed at generate time.
 function createPrismaClient() {
-  const adapter = new PrismaBetterSqlite3({
-    url: process.env.DATABASE_URL ?? "file:./dev.db",
-  });
+  const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
   return new PrismaClient({ adapter });
 }
 

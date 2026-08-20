@@ -1,42 +1,51 @@
+-- CreateSchema
+CREATE SCHEMA IF NOT EXISTS "public";
+
 -- CreateTable
 CREATE TABLE "Setting" (
-    "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    "id" SERIAL NOT NULL,
     "baseCurrency" TEXT NOT NULL DEFAULT 'USD',
-    "goalAmount" DECIMAL,
-    "savedAmount" DECIMAL,
-    "updatedAt" DATETIME NOT NULL
+    "goalAmount" DECIMAL(65,30),
+    "savedAmount" DECIMAL(65,30),
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "Setting_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
 CREATE TABLE "Label" (
-    "id" TEXT NOT NULL PRIMARY KEY,
+    "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "color" TEXT,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "Label_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
 CREATE TABLE "Item" (
-    "id" TEXT NOT NULL PRIMARY KEY,
+    "id" TEXT NOT NULL,
     "url" TEXT,
     "title" TEXT NOT NULL,
     "description" TEXT,
     "imageUrl" TEXT,
-    "originalPrice" DECIMAL,
+    "originalPrice" DECIMAL(65,30),
     "originalCurrency" TEXT,
-    "convertedPrice" DECIMAL,
+    "convertedPrice" DECIMAL(65,30),
     "baseCurrency" TEXT,
     "conversionStatus" TEXT NOT NULL DEFAULT 'unknown',
     "status" TEXT NOT NULL DEFAULT 'wishlist',
     "priority" TEXT,
     "store" TEXT,
     "notes" TEXT,
-    "boughtAt" DATETIME,
-    "boughtPrice" DECIMAL,
+    "boughtAt" TIMESTAMP(3),
+    "boughtPrice" DECIMAL(65,30),
     "boughtCurrency" TEXT,
     "rawMetadata" JSONB,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "Item_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -44,18 +53,18 @@ CREATE TABLE "ItemLabel" (
     "itemId" TEXT NOT NULL,
     "labelId" TEXT NOT NULL,
 
-    PRIMARY KEY ("itemId", "labelId"),
-    CONSTRAINT "ItemLabel_itemId_fkey" FOREIGN KEY ("itemId") REFERENCES "Item" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
-    CONSTRAINT "ItemLabel_labelId_fkey" FOREIGN KEY ("labelId") REFERENCES "Label" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+    CONSTRAINT "ItemLabel_pkey" PRIMARY KEY ("itemId","labelId")
 );
 
 -- CreateTable
 CREATE TABLE "ExchangeRateCache" (
-    "id" TEXT NOT NULL PRIMARY KEY,
+    "id" TEXT NOT NULL,
     "baseCurrency" TEXT NOT NULL,
     "rates" JSONB NOT NULL,
-    "fetchedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "expiresAt" DATETIME NOT NULL
+    "fetchedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "expiresAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "ExchangeRateCache_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateIndex
@@ -72,3 +81,10 @@ CREATE INDEX "ItemLabel_labelId_idx" ON "ItemLabel"("labelId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "ExchangeRateCache_baseCurrency_key" ON "ExchangeRateCache"("baseCurrency");
+
+-- AddForeignKey
+ALTER TABLE "ItemLabel" ADD CONSTRAINT "ItemLabel_itemId_fkey" FOREIGN KEY ("itemId") REFERENCES "Item"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "ItemLabel" ADD CONSTRAINT "ItemLabel_labelId_fkey" FOREIGN KEY ("labelId") REFERENCES "Label"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+

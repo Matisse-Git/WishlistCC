@@ -3,12 +3,8 @@ import { prisma } from "./db";
 import { toDecimal } from "./money";
 import type { Prisma } from "@/generated/prisma/client";
 
-// SQLite's LIKE is already case-insensitive for ASCII, so a plain `contains`
-// works here. If you switch the schema's datasource provider to "postgresql"
-// (see README "Deploying with PostgreSQL"), add `mode: "insensitive"` to this
-// filter to keep search case-insensitive there too.
 function ci(value: string): Prisma.StringFilter {
-  return { contains: value };
+  return { contains: value, mode: "insensitive" };
 }
 
 type ItemWithLabels = Prisma.ItemGetPayload<{

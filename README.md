@@ -1,6 +1,6 @@
 # WishListCC
 
-A personal wishlist tracker. Paste a product URL, it best-effort scrapes the title/price/image, converts prices to your base currency using free exchange rates, and tracks a savings goal against your wishlist total. Built to run entirely on free tiers — SQLite locally, no paid scraping or currency APIs required.
+A personal wishlist tracker. Paste a product URL, it best-effort scrapes the title/price/image, converts prices to your base currency using free exchange rates, and tracks a savings goal against your wishlist total. Built to run entirely on free tiers — Postgres (e.g. Neon's free tier) + Vercel, no paid scraping or currency APIs required.
 
 ## Features
 
@@ -14,18 +14,18 @@ A personal wishlist tracker. Paste a product URL, it best-effort scrapes the tit
 
 ## Tech stack
 
-Next.js (App Router) · React · TypeScript · Tailwind CSS · Prisma ORM 7 · SQLite (dev) / PostgreSQL-ready · Zod · Cheerio · lucide-react · Vitest
+Next.js (App Router) · React · TypeScript · Tailwind CSS · Prisma ORM 7 · PostgreSQL · Zod · Cheerio · lucide-react · Vitest
 
 ## Setup
 
 ```bash
 npm install
-cp .env.example .env
+cp .env.example .env   # set DATABASE_URL to a Postgres connection string
 npx prisma migrate dev
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000). That's it — SQLite is a local file (`dev.db`), no external services required to run the app. Currency conversion calls a free public API on demand; everything else works without network access.
+Open [http://localhost:3000](http://localhost:3000). A free Postgres instance (e.g. [Neon](https://neon.tech) or [Supabase](https://supabase.com)) works for local dev too — no local Postgres install required. Currency conversion calls a free public API on demand; everything else works without network access.
 
 ### Environment variables
 
@@ -33,7 +33,7 @@ See `.env.example`. All are optional except `DATABASE_URL`.
 
 | Variable | Required | Purpose |
 | --- | --- | --- |
-| `DATABASE_URL` | yes | `file:./dev.db` for local SQLite, or a `postgresql://...` URL once you've switched providers (see below). |
+| `DATABASE_URL` | yes | A `postgresql://...` connection string. |
 | `CURRENCY_API_KEY` | no | Only used if you configure a paid/keyed exchange-rate provider. The default (`open.er-api.com`) needs no key. |
 | `APP_URL` | no | Informational; not required for the app to function locally. |
 | `APP_PASSWORD` | no | If set, gates the whole app behind a single shared password (see below). Leave unset for local-only use. |
@@ -79,24 +79,11 @@ Price strings like `"$19.99"`, `"19,99 €"`, `"€1,234.56"`, and `"1 234,56 EU
 
 ## Deploying
 
-**Local / self-hosted (cheapest option):** `npm run build && npm start` behind whatever process manager you like, SQLite file on disk. Works well on a small VPS.
+**Vercel:** connect the repo (or run `vercel`), set the environment variables below in the project settings, then deploy. `postinstall` runs `prisma generate` automatically; run `npx prisma migrate deploy` (with `DATABASE_URL` pointed at prod) once to create the tables before the first request hits the DB.
 
-**Vercel or similar serverless platform:** SQLite's file-based storage doesn't persist across serverless deployments — switch to Postgres first (see below), e.g. a free tier on [Neon](https://neon.tech) or [Supabase](https://supabase.com).
+**Local / self-hosted:** `npm run build && npm start` behind whatever process manager you like, pointed at any reachable Postgres instance.
 
-### Deploying with PostgreSQL
-
-Prisma's SQL dialect is fixed at generate time, so switching providers means updating both the schema and the client's driver adapter:
-
-1. In `prisma/schema.prisma`, change `datasource db { provider = "sqlite" }` to `provider = "postgresql"`.
-2. `npm install @prisma/adapter-pg pg`
-3. In `src/lib/db.ts`, swap `PrismaBetterSqlite3` for `PrismaPg`:
-   ```ts
-   import { PrismaPg } from "@prisma/adapter-pg";
-   const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
-   ```
-4. Set `DATABASE_URL` to your Postgres connection string.
-5. `npx prisma migrate dev --name init` against the new database (SQLite's migration history doesn't carry over).
-6. Optional: in `src/lib/items.ts`, add `mode: "insensitive"` back to the `ci()` helper's `contains` filters — SQLite's `LIKE` is already case-insensitive for ASCII, Postgres's isn't.
+A free Postgres tier on [Neon](https://neon.tech) or [Supabase](https://supabase.com) is enough to run this app.
 
 ### Optional password protection
 
@@ -106,7 +93,6 @@ Unset by default — the app runs with no login. If you deploy it somewhere reac
 
 - **Scraping is best-effort.** Sites with aggressive bot detection (Amazon in particular, plus many others) will frequently fail to return usable data or will return partial data (e.g. no price) even though the fetch itself succeeds — Amazon especially serves different markup to bots and often omits price in the initial HTML. This is intentional: the app does not attempt to bypass anti-bot measures, CAPTCHAs, or login walls. When extraction fails, fill in the details manually — this always works regardless of the source site.
 - **No JS-rendered content.** The scraper reads static HTML only; sites that render price/title via client-side JavaScript won't extract those fields.
-- **SQLite has no native enum/array support**, so status/priority/conversionStatus are plain validated strings rather than DB-level enums. Functionally identical, just not enforced at the schema level.
 - **Rate limiting is in-memory and per-process** — fine for a single-user deployment, but doesn't coordinate across multiple server instances and resets on restart.
 - **`APP_PASSWORD` is a single shared secret**, not an accounts system — don't use it for anything beyond keeping a personal instance private.
 
