@@ -28,6 +28,14 @@ model Label {
   items     ItemLabel[]
 }
 
+model Group {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  color     String?
+  createdAt DateTime @default(now())
+  items     Item[]
+}
+
 model Item {
   id     String  @id @default(cuid())
   url    String?
@@ -61,8 +69,12 @@ model Item {
 
   labels ItemLabel[]
 
+  groupId String?
+  group   Group?  @relation(fields: [groupId], references: [id], onDelete: SetNull)
+
   @@index([status])
   @@index([createdAt])
+  @@index([groupId])
 }
 
 model ItemLabel {

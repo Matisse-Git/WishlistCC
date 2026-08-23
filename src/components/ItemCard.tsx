@@ -1,6 +1,7 @@
 "use client";
 
-import { Pencil, ShoppingCart, Trash2, ExternalLink, CheckCircle2 } from "lucide-react";
+import Link from "next/link";
+import { Pencil, ShoppingCart, Trash2, ExternalLink, CheckCircle2, Layers } from "lucide-react";
 import { PriceTag } from "./PriceTag";
 import { Badge } from "./ui/Badge";
 import { IconButton } from "./ui/IconButton";
@@ -90,6 +91,15 @@ export function ItemCard({ item, onEdit, onMarkBought, onDelete }: ItemCardProps
             baseCurrency={item.baseCurrency}
             conversionStatus={item.conversionStatus}
           />
+        )}
+
+        {item.group && (
+          <Link href={`/groups/${item.group.id}`} className="w-fit">
+            <Badge tone="neutral" className="hover:bg-border/60">
+              <Layers className="h-3 w-3" />
+              {item.group.name}
+            </Badge>
+          </Link>
         )}
 
         {item.labels.length > 0 && (

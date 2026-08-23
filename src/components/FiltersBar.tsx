@@ -5,12 +5,16 @@ import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { Search, X } from "lucide-react";
 import { Card } from "./ui/Card";
 import { Select } from "./ui/Input";
+import { LabelFilter } from "./LabelFilter";
 
 interface FiltersBarProps {
   stores: string[];
   labels: { id: string; name: string }[];
+  groups?: { id: string; name: string }[];
   showStatusFilter?: boolean;
   showMissingPriceFilter?: boolean;
+  showGroupFilter?: boolean;
+  defaultStatus?: "wishlist" | "all";
 }
 
 const SORT_OPTIONS = [
@@ -22,7 +26,15 @@ const SORT_OPTIONS = [
   { value: "titleAsc", label: "Title A-Z" },
 ];
 
-export function FiltersBar({ stores, labels, showStatusFilter = false, showMissingPriceFilter = true }: FiltersBarProps) {
+export function FiltersBar({
+  stores,
+  labels,
+  groups = [],
+  showStatusFilter = false,
+  showMissingPriceFilter = true,
+  showGroupFilter = true,
+  defaultStatus = "wishlist",
+}: FiltersBarProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -47,9 +59,11 @@ export function FiltersBar({ stores, labels, showStatusFilter = false, showMissi
     update("missingPrice", searchParams.get("missingPrice") === "true" ? null : "true");
   }
 
-  const hasFilters = ["search", "label", "store", "priority", "missingPrice", "status"].some((k) =>
+  const hasFilters = ["search", "labels", "group", "store", "priority", "missingPrice", "status"].some((k) =>
     searchParams.get(k)
   );
+
+  const selectedLabelIds = (searchParams.get("labels") ?? "").split(",").filter(Boolean);
 
   return (
     <Card padding="sm" className="flex flex-wrap items-center gap-2.5">
@@ -65,8 +79,8 @@ export function FiltersBar({ stores, labels, showStatusFilter = false, showMissi
 
       {showStatusFilter && (
         <Select
-          value={searchParams.get("status") ?? "wishlist"}
-          onChange={(e) => update("status", e.target.value === "wishlist" ? null : e.target.value)}
+          value={searchParams.get("status") ?? defaultStatus}
+          onChange={(e) => update("status", e.target.value === defaultStatus ? null : e.target.value)}
           className="w-auto py-2"
         >
           <option value="wishlist">Wishlist</option>
@@ -75,14 +89,22 @@ export function FiltersBar({ stores, labels, showStatusFilter = false, showMissi
         </Select>
       )}
 
-      <Select value={searchParams.get("label") ?? ""} onChange={(e) => update("label", e.target.value || null)} className="w-auto py-2">
-        <option value="">All labels</option>
-        {labels.map((l) => (
-          <option key={l.id} value={l.id}>
-            {l.name}
-          </option>
-        ))}
-      </Select>
+      <LabelFilter
+        labels={labels}
+        selected={selectedLabelIds}
+        onChange={(ids) => update("labels", ids.length > 0 ? ids.join(",") : null)}
+      />
+
+      {showGroupFilter && groups.length > 0 && (
+        <Select value={searchParams.get("group") ?? ""} onChange={(e) => update("group", e.target.value || null)} className="w-auto py-2">
+          <option value="">All groups</option>
+          {groups.map((g) => (
+            <option key={g.id} value={g.id}>
+              {g.name}
+            </option>
+          ))}
+        </Select>
+      )}
 
       <Select value={searchParams.get("store") ?? ""} onChange={(e) => update("store", e.target.value || null)} className="w-auto py-2">
         <option value="">All stores</option>

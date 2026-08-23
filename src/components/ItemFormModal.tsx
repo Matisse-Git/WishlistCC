@@ -7,6 +7,7 @@ import { Button } from "./ui/Button";
 import { CurrencySelect } from "./ui/CurrencySelect";
 import { Input, Textarea, Select, Label } from "./ui/Input";
 import { LabelPicker } from "./LabelPicker";
+import { GroupPicker } from "./GroupPicker";
 import { useToast } from "./ToastProvider";
 import type { SerializedItem } from "@/lib/items";
 import type { ExtractionDebugInfo } from "@/lib/scrape/types";
@@ -27,6 +28,7 @@ export interface ItemFormInitial {
   notes?: string | null;
   status?: string;
   labels?: string[];
+  group?: string | null;
   debug?: ExtractionDebugInfo | null;
 }
 
@@ -51,6 +53,7 @@ const emptyState = () => ({
   priority: "",
   notes: "",
   labels: [] as string[],
+  group: "",
 });
 
 export function ItemFormModal({ open, onClose, mode, initial, warnings, onSaved }: ItemFormModalProps) {
@@ -83,6 +86,7 @@ export function ItemFormModal({ open, onClose, mode, initial, warnings, onSaved 
         priority: initial?.priority ?? "",
         notes: initial?.notes ?? "",
         labels: initial?.labels ?? [],
+        group: initial?.group ?? "",
       });
       setLocalWarnings(warnings ?? []);
       setImageStage("direct");
@@ -154,6 +158,7 @@ export function ItemFormModal({ open, onClose, mode, initial, warnings, onSaved 
         priority: form.priority || null,
         notes: form.notes.trim() || null,
         labels: form.labels,
+        group: form.group || null,
       };
       if (form.convertedPriceOverride !== "") {
         payload.convertedPrice = Number(form.convertedPriceOverride);
@@ -342,6 +347,13 @@ export function ItemFormModal({ open, onClose, mode, initial, warnings, onSaved 
         <div>
           <Label>Labels</Label>
           <LabelPicker value={form.labels} onChange={(labels) => set("labels", labels)} />
+        </div>
+
+        <div>
+          <Label>
+            Group <span className="font-normal text-muted-foreground">(optional — e.g. &ldquo;Build a PC&rdquo;)</span>
+          </Label>
+          <GroupPicker value={form.group} onChange={(group) => set("group", group)} />
         </div>
 
         <div>

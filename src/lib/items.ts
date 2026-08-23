@@ -8,10 +8,16 @@ function ci(value: string): Prisma.StringFilter {
 }
 
 type ItemWithLabels = Prisma.ItemGetPayload<{
-  include: { labels: { include: { label: true } } };
+  include: { labels: { include: { label: true } }; group: true };
 }>;
 
 export interface SerializedLabel {
+  id: string;
+  name: string;
+  color: string | null;
+}
+
+export interface SerializedGroupRef {
   id: string;
   name: string;
   color: string | null;
@@ -38,6 +44,7 @@ export interface SerializedItem {
   createdAt: string;
   updatedAt: string;
   labels: SerializedLabel[];
+  group: SerializedGroupRef | null;
 }
 
 export function serializeItem(item: ItemWithLabels): SerializedItem {
@@ -62,10 +69,11 @@ export function serializeItem(item: ItemWithLabels): SerializedItem {
     createdAt: item.createdAt.toISOString(),
     updatedAt: item.updatedAt.toISOString(),
     labels: item.labels.map((l) => ({ id: l.label.id, name: l.label.name, color: l.label.color })),
+    group: item.group ? { id: item.group.id, name: item.group.name, color: item.group.color } : null,
   };
 }
 
-export const ITEM_INCLUDE = { labels: { include: { label: true } } } as const;
+export const ITEM_INCLUDE = { labels: { include: { label: true } }, group: true } as const;
 
 export type SortOption =
   | "createdAt"
@@ -78,7 +86,8 @@ export type SortOption =
 export interface ListItemsFilters {
   status?: string;
   search?: string;
-  label?: string;
+  labels?: string[];
+  group?: string;
   store?: string;
   missingPrice?: boolean;
   priority?: string;
@@ -100,7 +109,8 @@ export async function listItems(filters: ListItemsFilters): Promise<ListItemsRes
   if (filters.store) where.store = filters.store;
   if (filters.priority) where.priority = filters.priority;
   if (filters.missingPrice) where.convertedPrice = null;
-  if (filters.label) where.labels = { some: { labelId: filters.label } };
+  if (filters.labels?.length) where.labels = { some: { labelId: { in: filters.labels } } };
+  if (filters.group) where.groupId = filters.group;
   if (filters.search?.trim()) {
     const s = filters.search.trim();
     where.OR = [{ title: ci(s) }, { description: ci(s) }, { store: ci(s) }, { notes: ci(s) }];

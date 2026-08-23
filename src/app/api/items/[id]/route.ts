@@ -2,6 +2,7 @@ import { prisma } from "@/lib/db";
 import { getItemById } from "@/lib/items";
 import { getSettings } from "@/lib/settings";
 import { resolveLabelIdsByName } from "@/lib/labels";
+import { resolveGroupIdByName } from "@/lib/groups";
 import { computePriceFields } from "@/lib/conversion-service";
 import { itemUpdateSchema } from "@/lib/validation";
 import { ok, badRequest, notFound, validationError } from "@/lib/api-response";
@@ -68,6 +69,11 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       deleteMany: {},
       create: labelIds.map((labelId) => ({ labelId })),
     };
+  }
+
+  if (data.group !== undefined) {
+    const groupId = await resolveGroupIdByName(data.group);
+    data_.group = groupId ? { connect: { id: groupId } } : { disconnect: true };
   }
 
   await prisma.item.update({ where: { id }, data: data_ });

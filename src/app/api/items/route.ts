@@ -2,6 +2,7 @@ import { prisma } from "@/lib/db";
 import { listItems, getItemById, ITEM_INCLUDE } from "@/lib/items";
 import { getSettings } from "@/lib/settings";
 import { resolveLabelIdsByName } from "@/lib/labels";
+import { resolveGroupIdByName } from "@/lib/groups";
 import { computePriceFields } from "@/lib/conversion-service";
 import { itemCreateSchema, itemQuerySchema } from "@/lib/validation";
 import { ok, badRequest, validationError } from "@/lib/api-response";
@@ -25,6 +26,7 @@ export async function POST(request: Request) {
 
   const settings = await getSettings();
   const labelIds = data.labels ? await resolveLabelIdsByName(data.labels) : [];
+  const groupId = await resolveGroupIdByName(data.group);
 
   const manualOverride = data.convertedPrice !== undefined && data.convertedPrice !== null;
   const priceFields = manualOverride
@@ -51,6 +53,7 @@ export async function POST(request: Request) {
       store: data.store ?? null,
       notes: data.notes ?? null,
       labels: { create: labelIds.map((labelId) => ({ labelId })) },
+      groupId,
     },
     include: ITEM_INCLUDE,
   });

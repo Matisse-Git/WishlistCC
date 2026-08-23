@@ -26,6 +26,7 @@ function toInitial(item: SerializedItem): ItemFormInitial {
     notes: item.notes,
     status: item.status,
     labels: item.labels.map((l) => l.name),
+    group: item.group?.name ?? null,
   };
 }
 

@@ -2,12 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, ListChecks, ShoppingBag, Settings, Gift } from "lucide-react";
+import { LayoutDashboard, ListChecks, Layers, ShoppingBag, Settings, Gift } from "lucide-react";
 import { cn } from "@/lib/cn";
 
 const LINKS = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
   { href: "/items", label: "Wishlist", icon: ListChecks },
+  { href: "/groups", label: "Groups", icon: Layers },
   { href: "/bought", label: "Bought", icon: ShoppingBag },
   { href: "/settings", label: "Settings", icon: Settings },
 ] as const;

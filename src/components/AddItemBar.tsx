@@ -7,7 +7,7 @@ import { Button } from "./ui/Button";
 import { ItemFormModal, type ItemFormInitial } from "./ItemFormModal";
 import { useToast } from "./ToastProvider";
 
-export function AddItemBar() {
+export function AddItemBar({ defaultGroup }: { defaultGroup?: string }) {
   const router = useRouter();
   const { showToast } = useToast();
   const [url, setUrl] = useState("");
@@ -19,7 +19,7 @@ export function AddItemBar() {
   async function handleFetch(e: React.FormEvent) {
     e.preventDefault();
     if (!url.trim()) {
-      setInitial({});
+      setInitial({ group: defaultGroup ?? null });
       setWarnings([]);
       setModalOpen(true);
       return;
@@ -42,12 +42,13 @@ export function AddItemBar() {
         originalCurrency: data.currency ?? "USD",
         store: data.store ?? "",
         debug: data.debug ?? null,
+        group: defaultGroup ?? null,
       });
       setWarnings(data.warnings ?? []);
       setModalOpen(true);
     } catch (err) {
       showToast(err instanceof Error ? err.message : "Could not fetch details — add manually instead.", "error");
-      setInitial({ url });
+      setInitial({ url, group: defaultGroup ?? null });
       setWarnings(["Couldn't fetch details from that link. You can still fill the item in manually."]);
       setModalOpen(true);
     } finally {
@@ -56,7 +57,7 @@ export function AddItemBar() {
   }
 
   function handleAddManually() {
-    setInitial({});
+    setInitial({ group: defaultGroup ?? null });
     setWarnings([]);
     setModalOpen(true);
   }

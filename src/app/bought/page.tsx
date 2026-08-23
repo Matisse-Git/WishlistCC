@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { listItems, getDistinctStores, getDashboardStats, type SortOption } from "@/lib/items";
 import { listLabels } from "@/lib/labels";
+import { listGroups } from "@/lib/groups";
 import { getSettings } from "@/lib/settings";
 import { formatMoney } from "@/lib/money";
 import { FiltersBar } from "@/components/FiltersBar";
@@ -35,24 +36,27 @@ export default async function BoughtPage({
   const sortBy: SortOption =
     sortByParam && VALID_SORTS.has(sortByParam as SortOption) ? (sortByParam as SortOption) : "createdAt";
 
+  const labelsParam = get("labels");
   const filters = {
     status: "bought" as const,
     search: get("search"),
-    label: get("label"),
+    labels: labelsParam ? labelsParam.split(",").filter(Boolean) : undefined,
+    group: get("group"),
     store: get("store"),
     priority: get("priority"),
     sortBy,
   };
 
-  const [result, stores, labels, stats, settings] = await Promise.all([
+  const [result, stores, labels, groups, stats, settings] = await Promise.all([
     listItems(filters),
     getDistinctStores(),
     listLabels(),
+    listGroups(),
     getDashboardStats(),
     getSettings(),
   ]);
 
-  const hasAnyFilter = Boolean(filters.search || filters.label || filters.store || filters.priority);
+  const hasAnyFilter = Boolean(filters.search || filters.labels?.length || filters.group || filters.store || filters.priority);
 
   return (
     <div className="space-y-6">
@@ -73,7 +77,7 @@ export default async function BoughtPage({
         />
       </div>
 
-      <FiltersBar stores={stores} labels={labels} showMissingPriceFilter={false} />
+      <FiltersBar stores={stores} labels={labels} groups={groups} showMissingPriceFilter={false} />
 
       {result.items.length === 0 ? (
         hasAnyFilter ? (

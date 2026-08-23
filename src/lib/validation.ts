@@ -46,6 +46,7 @@ const itemFields = {
   store: z.string().max(200).nullable().optional(),
   notes: z.string().max(5000).nullable().optional(),
   labels: z.array(z.string().trim().min(1)).optional(),
+  group: z.string().trim().min(1).max(50).nullable().optional(),
 };
 
 export const itemCreateSchema = z.object({
@@ -76,10 +77,19 @@ export const labelCreateSchema = z.object({
   color: z.string().max(20).nullable().optional(),
 });
 
+export const groupCreateSchema = z.object({
+  name: z.string().trim().min(1, "Group name is required").max(50),
+  color: z.string().max(20).nullable().optional(),
+});
+
 export const itemQuerySchema = z.object({
   status: statusSchema.optional(),
   search: z.string().optional(),
-  label: z.string().optional(),
+  labels: z
+    .string()
+    .optional()
+    .transform((v) => (v ? v.split(",").filter(Boolean) : undefined)),
+  group: z.string().optional(),
   store: z.string().optional(),
   missingPrice: z.coerce.boolean().optional(),
   priority: prioritySchema.optional(),

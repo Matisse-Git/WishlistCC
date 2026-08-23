@@ -2,7 +2,9 @@ import { getSettings, serializeSettings } from "@/lib/settings";
 import { prisma } from "@/lib/db";
 import { SettingsForm } from "@/components/SettingsForm";
 import { LabelManager } from "@/components/LabelManager";
+import { GroupManager } from "@/components/GroupManager";
 import { listLabels } from "@/lib/labels";
+import { listGroups } from "@/lib/groups";
 import { PageHeader } from "@/components/ui/PageHeader";
 
 export const dynamic = "force-dynamic";
@@ -13,6 +15,7 @@ export default async function SettingsPage() {
     where: { baseCurrency: settings.baseCurrency },
   });
   const labels = await listLabels();
+  const groups = await listGroups();
 
   return (
     <div className="max-w-2xl space-y-6">
@@ -28,6 +31,7 @@ export default async function SettingsPage() {
       />
 
       <LabelManager initialLabels={labels} />
+      <GroupManager initialGroups={groups} />
     </div>
   );
 }
