@@ -47,7 +47,7 @@ export function ImageThumbnail({ src, alt, className, iconClassName }: ImageThum
           alt={alt}
           referrerPolicy="no-referrer"
           loading="lazy"
-          className="h-full w-full object-cover"
+          className="h-full w-full object-contain"
           onError={() => setStage((prev) => (prev === "direct" ? "proxy" : "failed"))}
         />
       ) : (
