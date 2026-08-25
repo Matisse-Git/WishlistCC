@@ -64,10 +64,10 @@ export function AddItemBar({ defaultGroup }: { defaultGroup?: string }) {
 
   return (
     <>
-      <div className="relative overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-accent-soft via-surface to-surface p-5 shadow-[var(--shadow-soft)] sm:p-6">
+      <div className="@container relative overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-accent-soft via-surface to-surface p-5 shadow-[var(--shadow-soft)]">
         <div className="pointer-events-none absolute -right-10 -top-16 h-48 w-48 rounded-full bg-accent/10 blur-3xl" />
         <div className="relative flex items-start gap-3">
-          <span className="mt-0.5 hidden h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-accent-hover shadow-sm sm:flex">
+          <span className="mt-0.5 hidden h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-accent-hover shadow-sm @lg:flex">
             <Link2 className="h-5 w-5" />
           </span>
           <div className="min-w-0 flex-1">
@@ -75,7 +75,7 @@ export function AddItemBar({ defaultGroup }: { defaultGroup?: string }) {
             <p className="mt-0.5 text-sm text-muted-foreground">
               We&rsquo;ll try to automatically fill in the image, title, and price.
             </p>
-            <form onSubmit={handleFetch} className="mt-4 flex flex-col gap-2 sm:flex-row">
+            <form onSubmit={handleFetch} className="mt-4 flex flex-col gap-2 @lg:flex-row">
               <input
                 type="text"
                 value={url}
@@ -84,11 +84,11 @@ export function AddItemBar({ defaultGroup }: { defaultGroup?: string }) {
                 className="flex-1 rounded-xl border border-border bg-surface px-4 py-2.5 text-sm shadow-sm placeholder:text-muted-foreground/70 focus:outline-none focus:ring-2 focus:ring-ring"
               />
               <div className="flex gap-2">
-                <Button type="submit" variant="primary" loading={loading} className="flex-1 sm:flex-none">
+                <Button type="submit" variant="primary" loading={loading} className="flex-1 @lg:flex-none">
                   <Wand2 className="h-4 w-4" />
                   Fetch details
                 </Button>
-                <Button type="button" variant="secondary" onClick={handleAddManually} className="flex-1 sm:flex-none">
+                <Button type="button" variant="secondary" onClick={handleAddManually} className="flex-1 @lg:flex-none">
                   <Plus className="h-4 w-4" />
                   Add manually
                 </Button>

@@ -4,6 +4,7 @@ import { listGroups } from "@/lib/groups";
 import { getSettings } from "@/lib/settings";
 import { formatMoney } from "@/lib/money";
 import { PageHeader } from "@/components/ui/PageHeader";
+import { PageLayout } from "@/components/ui/PageLayout";
 import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/EmptyState";
 import { NewGroupForm } from "@/components/NewGroupForm";
@@ -14,21 +15,30 @@ export default async function GroupsPage() {
   const [groups, settings] = await Promise.all([listGroups(), getSettings()]);
 
   return (
-    <div className="space-y-6">
+    <PageLayout
+      rail={
+        <Card padding="md" className="space-y-3">
+          <div>
+            <h2 className="text-sm font-semibold text-foreground">New group</h2>
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              Groups bundle items into a project, like “Build a PC” — separate from labels, which tag individual
+              items.
+            </p>
+          </div>
+          <NewGroupForm />
+        </Card>
+      }
+    >
       <PageHeader title="Groups" subtitle={`${groups.length} group${groups.length === 1 ? "" : "s"}`} />
-
-      <Card padding="sm">
-        <NewGroupForm />
-      </Card>
 
       {groups.length === 0 ? (
         <EmptyState
           icon={Layers}
           title="No groups yet"
-          description="Groups bundle items into a project, like “Build a PC” — separate from labels, which tag individual items."
+          description="Create your first group from the sidebar — separate from labels, which tag individual items."
         />
       ) : (
-        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-5">
           {groups.map((group) => (
             <Link key={group.id} href={`/groups/${group.id}`}>
               <Card hover className="flex h-full flex-col gap-3">
@@ -61,6 +71,6 @@ export default async function GroupsPage() {
           ))}
         </div>
       )}
-    </div>
+    </PageLayout>
   );
 }

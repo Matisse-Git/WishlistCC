@@ -63,7 +63,7 @@ export function GroupManager({ initialGroups }: { initialGroups: SerializedGroup
   }
 
   return (
-    <SettingsSection title="Groups" icon={Layers} description="Bundle items into a project, like “Build a PC”.">
+    <SettingsSection id="groups" title="Groups" icon={Layers} description="Bundle items into a project, like “Build a PC”.">
       <form onSubmit={handleCreate} className="flex gap-2">
         <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="New group name" />
         <Button type="submit" variant="secondary" loading={creating}>

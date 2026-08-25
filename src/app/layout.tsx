@@ -18,11 +18,15 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en" className={`${inter.variable} h-full antialiased`}>
-      <body className="min-h-full flex flex-col bg-background text-foreground">
+      <body className="min-h-full bg-background text-foreground">
         <ToastProvider>
           <VariantTotalsProvider>
-            <Nav />
-            <main className="flex-1 mx-auto w-full max-w-6xl px-4 sm:px-6 py-6 pb-24 sm:pb-6">{children}</main>
+            <div className="flex min-h-full flex-col sm:flex-row">
+              <Nav />
+              <main className="min-w-0 flex-1 px-4 py-6 pb-24 sm:px-6 sm:py-8 sm:pb-8 lg:px-10">
+                <div className="mx-auto w-full max-w-[1600px]">{children}</div>
+              </main>
+            </div>
           </VariantTotalsProvider>
         </ToastProvider>
       </body>

@@ -17,42 +17,61 @@ function isActive(pathname: string, href: string) {
   return href === "/" ? pathname === "/" : pathname.startsWith(href);
 }
 
+function Brand({ iconClassName, className }: { iconClassName?: string; className?: string }) {
+  return (
+    <Link href="/" className={cn("flex items-center gap-2 font-semibold text-foreground", className)}>
+      <span
+        className={cn(
+          "flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-accent to-violet-500 text-white shadow-sm",
+          iconClassName
+        )}
+      >
+        <Gift className="h-4.5 w-4.5" />
+      </span>
+      <span className="text-[15px] tracking-tight">WishListCC</span>
+    </Link>
+  );
+}
+
 export function Nav() {
   const pathname = usePathname();
 
   return (
     <>
-      <header className="sticky top-0 z-40 border-b border-border bg-surface/80 backdrop-blur-md">
-        <div className="mx-auto flex h-16 max-w-6xl items-center gap-6 px-4 sm:px-6">
-          <Link href="/" className="flex shrink-0 items-center gap-2 font-semibold text-foreground">
-            <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-accent to-violet-500 text-white shadow-sm">
-              <Gift className="h-4.5 w-4.5" />
-            </span>
-            <span className="text-[15px] tracking-tight">WishListCC</span>
-          </Link>
-          <nav className="hidden items-center gap-1 sm:flex">
-            {LINKS.map(({ href, label, icon: Icon }) => {
-              const active = isActive(pathname, href);
-              return (
-                <Link
-                  key={href}
-                  href={href}
-                  className={cn(
-                    "flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-sm font-medium whitespace-nowrap transition-colors duration-150",
-                    active
-                      ? "bg-accent-soft text-accent-hover"
-                      : "text-muted-foreground hover:bg-surface-muted hover:text-foreground"
-                  )}
-                >
-                  <Icon className="h-4 w-4" />
-                  {label}
-                </Link>
-              );
-            })}
-          </nav>
+      {/* Desktop sidebar — primary navigation lives on the side so the top of
+          every page is free for actual content instead of a header bar. */}
+      <aside className="hidden shrink-0 flex-col border-r border-border bg-surface sm:sticky sm:top-0 sm:flex sm:h-screen sm:w-60">
+        <div className="flex h-16 shrink-0 items-center border-b border-border px-5">
+          <Brand />
         </div>
+        <nav className="flex flex-1 flex-col gap-1 overflow-y-auto p-3">
+          {LINKS.map(({ href, label, icon: Icon }) => {
+            const active = isActive(pathname, href);
+            return (
+              <Link
+                key={href}
+                href={href}
+                className={cn(
+                  "flex items-center gap-2.5 rounded-xl px-3.5 py-2.5 text-sm font-medium transition-colors duration-150",
+                  active
+                    ? "bg-accent-soft text-accent-hover"
+                    : "text-muted-foreground hover:bg-surface-muted hover:text-foreground"
+                )}
+              >
+                <Icon className="h-4.5 w-4.5" />
+                {label}
+              </Link>
+            );
+          })}
+        </nav>
+      </aside>
+
+      {/* Mobile top bar — just branding; primary nav is the bottom tab bar. */}
+      <header className="sticky top-0 z-40 flex h-14 shrink-0 items-center border-b border-border bg-surface/80 px-4 backdrop-blur-md sm:hidden">
+        <Brand iconClassName="h-7 w-7 rounded-lg" />
       </header>
 
+      {/* Mobile bottom tab bar */}
       <nav className="fixed inset-x-0 bottom-0 z-40 flex border-t border-border bg-surface/95 backdrop-blur-md pb-[env(safe-area-inset-bottom)] sm:hidden">
         {LINKS.map(({ href, label, icon: Icon }) => {
           const active = isActive(pathname, href);

@@ -83,7 +83,11 @@ export function ItemsGrid({ items, allowMarkBought = true }: { items: Serialized
 
   return (
     <>
-      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      {/* Column count tracks the actual width of this grid (which varies with
+          the sidebar + rail, not just the viewport) rather than fixed
+          viewport breakpoints, so cards stay a comfortable size next to the
+          rail instead of being squeezed into too many narrow columns. */}
+      <div className="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-5">
         {renderItems.map((item) =>
           item.variants.length > 1 ? (
             <VariantCard

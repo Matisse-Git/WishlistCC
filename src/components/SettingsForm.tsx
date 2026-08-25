@@ -93,6 +93,7 @@ export function SettingsForm({
     <>
       <form onSubmit={handleSave}>
         <SettingsSection
+          id="general"
           title="General"
           icon={SlidersHorizontal}
           description="Choose the currency used for totals and converted prices."
@@ -144,7 +145,12 @@ export function SettingsForm({
         </SettingsSection>
       </form>
 
-      <SettingsSection title="Exchange rates" icon={Landmark} description="Rates are cached and refreshed on demand.">
+      <SettingsSection
+        id="exchange-rates"
+        title="Exchange rates"
+        icon={Landmark}
+        description="Rates are cached and refreshed on demand."
+      >
         {rateInfo ? (
           <p className="text-sm text-muted-foreground">
             Last fetched {formatDateTime(rateInfo.fetchedAt)} · expires {formatDateTime(rateInfo.expiresAt)}
@@ -159,6 +165,7 @@ export function SettingsForm({
       </SettingsSection>
 
       <SettingsSection
+        id="danger-zone"
         title="Danger zone"
         icon={AlertTriangle}
         danger

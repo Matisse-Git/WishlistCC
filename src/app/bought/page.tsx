@@ -9,6 +9,7 @@ import { ItemsGrid } from "@/components/ItemsGrid";
 import { EmptyState } from "@/components/EmptyState";
 import { StatCard } from "@/components/StatCard";
 import { PageHeader } from "@/components/ui/PageHeader";
+import { PageLayout } from "@/components/ui/PageLayout";
 import { ShoppingBag, CalendarClock, SearchX } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -59,25 +60,29 @@ export default async function BoughtPage({
   const hasAnyFilter = Boolean(filters.search || filters.labels?.length || filters.group || filters.store || filters.priority);
 
   return (
-    <div className="space-y-6">
+    <PageLayout
+      rail={
+        <>
+          <div className="grid grid-cols-2 gap-3">
+            <StatCard
+              label="Total spent"
+              value={formatMoney(stats.boughtTotal, settings.baseCurrency)}
+              icon={ShoppingBag}
+              tone="success"
+            />
+            <StatCard
+              label="Spent this month"
+              value={formatMoney(stats.boughtTotalThisMonth, settings.baseCurrency)}
+              icon={CalendarClock}
+              tone="accent"
+            />
+          </div>
+
+          <FiltersBar stores={stores} labels={labels} groups={groups} showMissingPriceFilter={false} />
+        </>
+      }
+    >
       <PageHeader title="Bought" subtitle={`${result.total} item${result.total === 1 ? "" : "s"} purchased`} />
-
-      <div className="grid grid-cols-2 gap-4">
-        <StatCard
-          label="Total spent"
-          value={formatMoney(stats.boughtTotal, settings.baseCurrency)}
-          icon={ShoppingBag}
-          tone="success"
-        />
-        <StatCard
-          label="Spent this month"
-          value={formatMoney(stats.boughtTotalThisMonth, settings.baseCurrency)}
-          icon={CalendarClock}
-          tone="accent"
-        />
-      </div>
-
-      <FiltersBar stores={stores} labels={labels} groups={groups} showMissingPriceFilter={false} />
 
       {result.items.length === 0 ? (
         hasAnyFilter ? (
@@ -112,6 +117,6 @@ export default async function BoughtPage({
       ) : (
         <ItemsGrid items={result.items} allowMarkBought={false} />
       )}
-    </div>
+    </PageLayout>
   );
 }

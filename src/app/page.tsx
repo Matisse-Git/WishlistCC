@@ -10,6 +10,7 @@ import { AddItemBar } from "@/components/AddItemBar";
 import { ItemsGrid } from "@/components/ItemsGrid";
 import { EmptyState } from "@/components/EmptyState";
 import { PageHeader, SectionHeader } from "@/components/ui/PageHeader";
+import { PageLayout } from "@/components/ui/PageLayout";
 
 export const dynamic = "force-dynamic";
 
@@ -22,47 +23,51 @@ export default async function DashboardPage() {
   ]);
 
   return (
-    <div className="space-y-7">
+    <PageLayout
+      rail={
+        <>
+          <AddItemBar />
+
+          <div className="grid grid-cols-2 gap-3">
+            <StatCard label="Active items" value={String(stats.activeCount)} icon={Package} tone="accent" />
+            <StatCard
+              label={stats.isEstimatedTotal ? "Est. wishlist total" : "Wishlist total"}
+              value={<LiveMoneyValue amount={stats.activeTotal} currency={settings.baseCurrency} />}
+              sublabel={
+                stats.activeMissingPriceCount > 0 ? `${stats.activeMissingPriceCount} missing price` : "Ready to shop"
+              }
+              icon={Wallet}
+              tone="neutral"
+            />
+            <StatCard label="Bought items" value={String(stats.boughtCount)} icon={ShoppingBag} tone="success" />
+            {stats.activeMissingPriceCount > 0 ? (
+              <StatCard
+                label="Missing prices"
+                value={String(stats.activeMissingPriceCount)}
+                sublabel="Fill these in for a precise total"
+                icon={AlertCircle}
+                tone="warning"
+              />
+            ) : (
+              <StatCard
+                label="Total spent"
+                value={formatMoney(stats.boughtTotal, settings.baseCurrency)}
+                icon={ShoppingBag}
+                tone="success"
+              />
+            )}
+          </div>
+
+          <GoalCard
+            baseCurrency={settings.baseCurrency}
+            goalAmount={settings.goalAmount?.toString() ?? null}
+            savedAmount={settings.savedAmount?.toString() ?? null}
+            activeWishlistTotal={stats.activeTotal}
+          />
+        </>
+      }
+    >
       <PageHeader title="My Wishlist" subtitle="Track what you want, what it costs, and what you've bought." />
-
-      <AddItemBar />
-
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-        <StatCard label="Active items" value={String(stats.activeCount)} icon={Package} tone="accent" />
-        <StatCard
-          label={stats.isEstimatedTotal ? "Est. wishlist total" : "Wishlist total"}
-          value={<LiveMoneyValue amount={stats.activeTotal} currency={settings.baseCurrency} />}
-          sublabel={
-            stats.activeMissingPriceCount > 0 ? `${stats.activeMissingPriceCount} missing price` : "Ready to shop"
-          }
-          icon={Wallet}
-          tone="neutral"
-        />
-        <StatCard label="Bought items" value={String(stats.boughtCount)} icon={ShoppingBag} tone="success" />
-        {stats.activeMissingPriceCount > 0 ? (
-          <StatCard
-            label="Missing prices"
-            value={String(stats.activeMissingPriceCount)}
-            sublabel="Fill these in for a precise total"
-            icon={AlertCircle}
-            tone="warning"
-          />
-        ) : (
-          <StatCard
-            label="Total spent"
-            value={formatMoney(stats.boughtTotal, settings.baseCurrency)}
-            icon={ShoppingBag}
-            tone="success"
-          />
-        )}
-      </div>
-
-      <GoalCard
-        baseCurrency={settings.baseCurrency}
-        goalAmount={settings.goalAmount?.toString() ?? null}
-        savedAmount={settings.savedAmount?.toString() ?? null}
-        activeWishlistTotal={stats.activeTotal}
-      />
 
       <section className="space-y-3">
         <SectionHeader
@@ -81,7 +86,7 @@ export default async function DashboardPage() {
         {recentItems.length === 0 ? (
           <EmptyState
             title="Your wishlist is empty"
-            description="Paste a product link above to add your first item — or add one manually."
+            description="Paste a product link in the sidebar to add your first item — or add one manually."
           />
         ) : (
           <ItemsGrid items={recentItems} />
@@ -94,6 +99,6 @@ export default async function DashboardPage() {
           <ItemsGrid items={expensiveItems} />
         </section>
       )}
-    </div>
+    </PageLayout>
   );
 }

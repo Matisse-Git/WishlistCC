@@ -9,6 +9,7 @@ interface SettingsSectionProps {
   icon?: React.ElementType;
   footer?: React.ReactNode;
   className?: string;
+  id?: string;
 }
 
 export function SettingsSection({
@@ -19,11 +20,13 @@ export function SettingsSection({
   icon: Icon,
   footer,
   className,
+  id,
 }: SettingsSectionProps) {
   return (
     <Card
+      id={id}
       padding="lg"
-      className={cn("space-y-5", danger && "border-destructive/30 bg-destructive-soft/40", className)}
+      className={cn("scroll-mt-8 space-y-5", danger && "border-destructive/30 bg-destructive-soft/40", className)}
     >
       <div>
         <h2 className={cn("flex items-center gap-1.5 text-sm font-semibold", danger ? "text-rose-700" : "text-foreground")}>

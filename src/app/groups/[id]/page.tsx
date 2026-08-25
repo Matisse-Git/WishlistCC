@@ -12,6 +12,7 @@ import { EmptyState } from "@/components/EmptyState";
 import { StatCard } from "@/components/StatCard";
 import { LiveMoneyValue } from "@/components/LiveMoneyValue";
 import { PageHeader } from "@/components/ui/PageHeader";
+import { PageLayout } from "@/components/ui/PageLayout";
 
 export const dynamic = "force-dynamic";
 
@@ -75,29 +76,33 @@ export default async function GroupDetailPage({
   );
 
   return (
-    <div className="space-y-6">
+    <PageLayout
+      rail={
+        <>
+          <div className="grid grid-cols-2 gap-3">
+            <StatCard
+              label="Wishlist total"
+              value={<LiveMoneyValue amount={group.activeTotal} currency={settings.baseCurrency} groupId={group.id} />}
+              icon={Wallet}
+              tone="accent"
+            />
+            <StatCard
+              label="Already spent"
+              value={formatMoney(group.boughtTotal, settings.baseCurrency)}
+              icon={ShoppingBag}
+              tone="success"
+            />
+          </div>
+
+          <AddItemBar defaultGroup={group.name} />
+          <FiltersBar stores={stores} labels={labels} showStatusFilter showGroupFilter={false} defaultStatus="all" />
+        </>
+      }
+    >
       <PageHeader
         title={group.name}
         subtitle={`${group.itemCount} item${group.itemCount === 1 ? "" : "s"} in this group`}
       />
-
-      <div className="grid grid-cols-2 gap-4">
-        <StatCard
-          label="Wishlist total"
-          value={<LiveMoneyValue amount={group.activeTotal} currency={settings.baseCurrency} groupId={group.id} />}
-          icon={Wallet}
-          tone="accent"
-        />
-        <StatCard
-          label="Already spent"
-          value={formatMoney(group.boughtTotal, settings.baseCurrency)}
-          icon={ShoppingBag}
-          tone="success"
-        />
-      </div>
-
-      <AddItemBar defaultGroup={group.name} />
-      <FiltersBar stores={stores} labels={labels} showStatusFilter showGroupFilter={false} defaultStatus="all" />
 
       {result.items.length === 0 ? (
         hasAnyFilter ? (
@@ -110,12 +115,12 @@ export default async function GroupDetailPage({
           <EmptyState
             icon={Layers}
             title="Nothing in this group yet"
-            description={`Add an item above, or assign an existing item to “${group.name}” from its edit form.`}
+            description={`Add an item from the sidebar, or assign an existing item to “${group.name}” from its edit form.`}
           />
         )
       ) : (
         <ItemsGrid items={result.items} allowMarkBought={status !== "bought"} />
       )}
-    </div>
+    </PageLayout>
   );
 }

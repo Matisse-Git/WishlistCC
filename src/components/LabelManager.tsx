@@ -59,7 +59,7 @@ export function LabelManager({ initialLabels }: { initialLabels: SerializedLabel
   }
 
   return (
-    <SettingsSection title="Labels" icon={Tag} description="Organize your wishlist with custom tags.">
+    <SettingsSection id="labels" title="Labels" icon={Tag} description="Organize your wishlist with custom tags.">
       <form onSubmit={handleCreate} className="flex gap-2">
         <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="New label name" />
         <Button type="submit" variant="secondary" loading={creating}>

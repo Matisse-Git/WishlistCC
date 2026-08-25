@@ -36,14 +36,13 @@ export function NewGroupForm() {
   }
 
   return (
-    <form onSubmit={handleCreate} className="flex gap-2">
+    <form onSubmit={handleCreate} className="flex flex-col gap-2">
       <Input
         value={name}
         onChange={(e) => setName(e.target.value)}
         placeholder="New group name, e.g. “Build a PC”"
-        className="max-w-xs"
       />
-      <Button type="submit" variant="secondary" loading={creating}>
+      <Button type="submit" variant="secondary" loading={creating} className="w-full">
         <Plus className="h-4 w-4" />
         New group
       </Button>

@@ -13,9 +13,10 @@ interface LabelFilterProps {
   labels: LabelOption[];
   selected: string[];
   onChange: (ids: string[]) => void;
+  fullWidth?: boolean;
 }
 
-export function LabelFilter({ labels, selected, onChange }: LabelFilterProps) {
+export function LabelFilter({ labels, selected, onChange, fullWidth = false }: LabelFilterProps) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const containerRef = useRef<HTMLDivElement>(null);
@@ -52,12 +53,13 @@ export function LabelFilter({ labels, selected, onChange }: LabelFilterProps) {
   }
 
   return (
-    <div ref={containerRef} className="relative">
+    <div ref={containerRef} className={cn("relative", fullWidth && "w-full")}>
       <button
         type="button"
         onClick={() => (open ? close() : setOpen(true))}
         className={cn(
           "flex h-full items-center gap-1.5 whitespace-nowrap rounded-xl border border-border bg-surface px-3.5 py-2 text-sm text-foreground transition-shadow duration-150 hover:bg-surface-muted focus:outline-none focus:ring-2 focus:ring-ring",
+          fullWidth && "w-full",
           selected.length > 0 && "border-transparent bg-accent-soft text-accent-hover hover:bg-accent-soft"
         )}
       >
@@ -68,11 +70,16 @@ export function LabelFilter({ labels, selected, onChange }: LabelFilterProps) {
             {selected.length}
           </span>
         )}
-        <ChevronDown className="h-3.5 w-3.5 opacity-60" />
+        <ChevronDown className={cn("h-3.5 w-3.5 opacity-60", fullWidth && "ml-auto")} />
       </button>
 
       {open && (
-        <div className="absolute z-20 mt-1.5 w-64 overflow-hidden rounded-xl border border-border bg-surface shadow-[var(--shadow-soft-lg)]">
+        <div
+          className={cn(
+            "absolute z-20 mt-1.5 overflow-hidden rounded-xl border border-border bg-surface shadow-[var(--shadow-soft-lg)]",
+            fullWidth ? "w-full" : "w-64"
+          )}
+        >
           <div className="relative border-b border-border p-2">
             <Search className="pointer-events-none absolute left-4.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
             <input

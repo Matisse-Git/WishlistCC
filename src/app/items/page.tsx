@@ -8,6 +8,7 @@ import { FiltersBar } from "@/components/FiltersBar";
 import { ItemsGrid } from "@/components/ItemsGrid";
 import { EmptyState } from "@/components/EmptyState";
 import { PageHeader } from "@/components/ui/PageHeader";
+import { PageLayout } from "@/components/ui/PageLayout";
 
 export const dynamic = "force-dynamic";
 
@@ -60,14 +61,18 @@ export default async function ItemsPage({
   );
 
   return (
-    <div className="space-y-6">
+    <PageLayout
+      rail={
+        <>
+          <AddItemBar />
+          <FiltersBar stores={stores} labels={labels} groups={groups} showStatusFilter />
+        </>
+      }
+    >
       <PageHeader
         title="Wishlist"
         subtitle={`${result.total} item${result.total === 1 ? "" : "s"}`}
       />
-
-      <AddItemBar />
-      <FiltersBar stores={stores} labels={labels} groups={groups} showStatusFilter />
 
       {result.items.length === 0 ? (
         hasAnyFilter ? (
@@ -87,12 +92,12 @@ export default async function ItemsPage({
         ) : (
           <EmptyState
             title="Your wishlist is empty"
-            description="Paste a product link above to add your first item — or add one manually."
+            description="Paste a product link in the sidebar to add your first item — or add one manually."
           />
         )
       ) : (
         <ItemsGrid items={result.items} allowMarkBought={status !== "bought"} />
       )}
-    </div>
+    </PageLayout>
   );
 }
