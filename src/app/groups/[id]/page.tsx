@@ -10,6 +10,7 @@ import { FiltersBar } from "@/components/FiltersBar";
 import { ItemsGrid } from "@/components/ItemsGrid";
 import { EmptyState } from "@/components/EmptyState";
 import { StatCard } from "@/components/StatCard";
+import { LiveMoneyValue } from "@/components/LiveMoneyValue";
 import { PageHeader } from "@/components/ui/PageHeader";
 
 export const dynamic = "force-dynamic";
@@ -83,7 +84,7 @@ export default async function GroupDetailPage({
       <div className="grid grid-cols-2 gap-4">
         <StatCard
           label="Wishlist total"
-          value={formatMoney(group.activeTotal, settings.baseCurrency)}
+          value={<LiveMoneyValue amount={group.activeTotal} currency={settings.baseCurrency} groupId={group.id} />}
           icon={Wallet}
           tone="accent"
         />

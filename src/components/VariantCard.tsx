@@ -1,11 +1,13 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { GitCompare, Loader2, Plus } from "lucide-react";
+import Decimal from "decimal.js";
 import { ItemCard } from "./ItemCard";
 import { useToast } from "./ToastProvider";
-import { formatMoney } from "@/lib/money";
+import { useVariantTotals } from "./VariantTotalsProvider";
+import { formatMoney, toDecimal } from "@/lib/money";
 import { cn } from "@/lib/cn";
 import type { SerializedItem } from "@/lib/items";
 
@@ -25,6 +27,7 @@ function truncate(title: string, max = 24): string {
 export function VariantCard({ item, onEdit, onMarkBought, onDelete, onAddVariant }: VariantCardProps) {
   const router = useRouter();
   const { showToast } = useToast();
+  const { setOverride, clearOverride } = useVariantTotals();
 
   const options = item.variants.length > 1 ? item.variants : [item];
   const serverSelected = options.find((v) => v.isSelected) ?? options[0];
@@ -48,6 +51,18 @@ export function VariantCard({ item, onEdit, onMarkBought, onDelete, onAddVariant
     setOptimisticId(null);
   }
 
+  // The total's own base value only catches up once selectionSignature
+  // changes (see above) — clearing the override in the same render-time
+  // adjustment would touch a different component's state mid-render, which
+  // React disallows, so this needs an effect. Specifically a *layout* effect:
+  // it runs before the browser paints, so the moment the fresh (already
+  // correct) base total lands, the now-redundant override is gone before
+  // that frame is ever shown — a plain effect fires after paint and would
+  // let a briefly double-counted total flash on screen.
+  useLayoutEffect(() => {
+    if (item.variantGroupId) clearOverride(item.variantGroupId);
+  }, [selectionSignature, item.variantGroupId, clearOverride]);
+
   const selected = options.find((v) => v.id === optimisticId) ?? serverSelected;
 
   async function handleSwitch(target: SerializedItem) {
@@ -56,6 +71,18 @@ export function VariantCard({ item, onEdit, onMarkBought, onDelete, onAddVariant
     latestRequestedIdRef.current = target.id;
     setOptimisticId(target.id);
     setSyncing(true);
+
+    // Always computed against the server-confirmed baseline (not the
+    // currently-displayed optimistic pick), so repeated clicks before
+    // confirmation overwrite this set's delta instead of stacking it.
+    if (item.variantGroupId) {
+      setOverride(item.variantGroupId, {
+        groupId: item.group?.id ?? null,
+        delta: (toDecimal(target.convertedPrice) ?? new Decimal(0)).minus(
+          toDecimal(serverSelected.convertedPrice) ?? new Decimal(0)
+        ),
+      });
+    }
 
     // A rapid second click cancels whatever switch is still in flight — only
     // the latest one is allowed to land.
@@ -70,12 +97,16 @@ export function VariantCard({ item, onEdit, onMarkBought, onDelete, onAddVariant
       });
       if (!res.ok) throw new Error("Failed to switch variant");
       if (latestRequestedIdRef.current === target.id) {
+        // Don't clear the override here — the server's own total hasn't
+        // caught up yet at this instant, only the effect above (keyed on
+        // fresh data actually arriving) can safely hand off from it.
         router.refresh();
       }
     } catch (err) {
       if (controller.signal.aborted) return; // superseded by a newer click — its own request owns the outcome now
       if (latestRequestedIdRef.current === target.id) {
         setOptimisticId(null);
+        if (item.variantGroupId) clearOverride(item.variantGroupId);
         router.refresh(); // re-sync with whatever the server actually ended up with
         showToast(err instanceof Error ? err.message : "Failed to switch variant", "error");
       }

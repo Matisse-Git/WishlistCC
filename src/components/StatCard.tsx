@@ -12,7 +12,7 @@ const TONE_CLASSES: Record<Tone, string> = {
 
 interface StatCardProps {
   label: string;
-  value: string;
+  value: React.ReactNode;
   sublabel?: string;
   icon?: React.ElementType;
   tone?: Tone;

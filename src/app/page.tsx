@@ -4,6 +4,7 @@ import { getSettings } from "@/lib/settings";
 import { getDashboardStats, getRecentItems, getMostExpensiveItems } from "@/lib/items";
 import { formatMoney } from "@/lib/money";
 import { StatCard } from "@/components/StatCard";
+import { LiveMoneyValue } from "@/components/LiveMoneyValue";
 import { GoalCard } from "@/components/GoalCard";
 import { AddItemBar } from "@/components/AddItemBar";
 import { ItemsGrid } from "@/components/ItemsGrid";
@@ -30,7 +31,7 @@ export default async function DashboardPage() {
         <StatCard label="Active items" value={String(stats.activeCount)} icon={Package} tone="accent" />
         <StatCard
           label={stats.isEstimatedTotal ? "Est. wishlist total" : "Wishlist total"}
-          value={formatMoney(stats.activeTotal, settings.baseCurrency)}
+          value={<LiveMoneyValue amount={stats.activeTotal} currency={settings.baseCurrency} />}
           sublabel={
             stats.activeMissingPriceCount > 0 ? `${stats.activeMissingPriceCount} missing price` : "Ready to shop"
           }
