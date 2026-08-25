@@ -1,7 +1,7 @@
 "use client";
 
 import Decimal from "decimal.js";
-import { useVariantTotals } from "./VariantTotalsProvider";
+import { useLiveTotals } from "./LiveTotalsProvider";
 import { formatMoney, toDecimal } from "@/lib/money";
 
 interface LiveMoneyValueProps {
@@ -11,9 +11,9 @@ interface LiveMoneyValueProps {
   groupId?: string | null;
 }
 
-/** A server-computed total, live-adjusted for any variant switches still in flight on this page — see VariantTotalsProvider. */
+/** A server-computed total, live-adjusted for any variant/price-source switches still in flight on this page — see LiveTotalsProvider. */
 export function LiveMoneyValue({ amount, currency, groupId }: LiveMoneyValueProps) {
-  const { getDelta } = useVariantTotals();
+  const { getDelta } = useLiveTotals();
   const base = toDecimal(amount) ?? new Decimal(0);
   return <>{formatMoney(base.plus(getDelta(groupId)), currency)}</>;
 }

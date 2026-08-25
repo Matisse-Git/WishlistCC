@@ -90,10 +90,38 @@ model Item {
   variantGroup   VariantGroup? @relation(fields: [variantGroupId], references: [id], onDelete: SetNull)
   isSelected     Boolean       @default(true)
 
+  // Other places to buy this exact item — see PriceSource. Distinct from
+  // variants: these aren't alternative products, just alternative listings
+  // for the same one. The Item's own price/url/store fields above are
+  // always "the active listing"; switching sources swaps that data with a
+  // PriceSource row rather than changing which row is selected.
+  priceSources PriceSource[]
+
   @@index([status])
   @@index([createdAt])
   @@index([groupId])
   @@index([variantGroupId])
+}
+
+// An alternate store/URL/price for an Item that isn't currently the active
+// listing (see Item.priceSources). Activating one swaps its fields with the
+// owning Item's own price fields — see src/lib/priceSources.ts.
+model PriceSource {
+  id     String @id @default(cuid())
+  itemId String
+  item   Item   @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  url              String?
+  store            String?
+  originalPrice    Decimal?
+  originalCurrency String?
+  convertedPrice   Decimal?
+  baseCurrency     String?
+  conversionStatus String  @default("unknown")
+
+  createdAt DateTime @default(now())
+
+  @@index([itemId])
 }
 
 model ItemLabel {

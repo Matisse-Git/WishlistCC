@@ -62,6 +62,22 @@ export const itemUpdateSchema = z.object({
   title: itemFields.title.optional(),
 });
 
+// A price source needs at least a URL or a store name — an empty one
+// (just a price with no idea where it came from) isn't useful to compare.
+export const priceSourceCreateSchema = z
+  .object({
+    url: httpUrlSchema.nullable().optional(),
+    store: z.string().trim().max(200).nullable().optional(),
+    originalPrice: z.number().min(0).nullable().optional(),
+    originalCurrency: currencyCodeSchema.nullable().optional(),
+    convertedPrice: z.number().min(0).nullable().optional(),
+    baseCurrency: currencyCodeSchema.nullable().optional(),
+  })
+  .refine((data) => Boolean(data.url) || Boolean(data.store), {
+    message: "Enter a URL or a store name",
+    path: ["url"],
+  });
+
 export const markBoughtSchema = z.object({
   boughtAt: z.coerce.date().optional(),
   boughtPrice: z.number().min(0).nullable().optional(),
@@ -106,6 +122,7 @@ export const itemQuerySchema = z.object({
 
 export type ItemCreateInput = z.infer<typeof itemCreateSchema>;
 export type ItemUpdateInput = z.infer<typeof itemUpdateSchema>;
+export type PriceSourceCreateInput = z.infer<typeof priceSourceCreateSchema>;
 export type MarkBoughtInput = z.infer<typeof markBoughtSchema>;
 export type SettingsUpdateInput = z.infer<typeof settingsUpdateSchema>;
 export type ItemQueryInput = z.infer<typeof itemQuerySchema>;

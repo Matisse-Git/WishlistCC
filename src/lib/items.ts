@@ -10,12 +10,14 @@ function ci(value: string): Prisma.StringFilter {
 const VARIANT_SIBLING_INCLUDE = {
   labels: { include: { label: true } },
   group: true,
+  priceSources: true,
 } as const;
 
 type ItemWithLabels = Prisma.ItemGetPayload<{
   include: {
     labels: { include: { label: true } };
     group: true;
+    priceSources: true;
     variantGroup: { include: { items: { include: typeof VARIANT_SIBLING_INCLUDE } } };
   };
 }>;
@@ -32,6 +34,18 @@ export interface SerializedGroupRef {
   id: string;
   name: string;
   color: string | null;
+}
+
+export interface SerializedPriceSource {
+  id: string;
+  url: string | null;
+  store: string | null;
+  originalPrice: string | null;
+  originalCurrency: string | null;
+  convertedPrice: string | null;
+  baseCurrency: string | null;
+  conversionStatus: string;
+  createdAt: string;
 }
 
 export interface SerializedItem {
@@ -67,6 +81,22 @@ export interface SerializedItem {
    * duplicating the whole set at every level.
    */
   variants: SerializedItem[];
+  /** Other places to buy this exact item, sorted oldest-first — see PriceSource. Empty if none have been added. */
+  priceSources: SerializedPriceSource[];
+}
+
+function serializePriceSource(source: VariantSiblingRow["priceSources"][number]): SerializedPriceSource {
+  return {
+    id: source.id,
+    url: source.url,
+    store: source.store,
+    originalPrice: source.originalPrice?.toString() ?? null,
+    originalCurrency: source.originalCurrency,
+    convertedPrice: source.convertedPrice?.toString() ?? null,
+    baseCurrency: source.baseCurrency,
+    conversionStatus: source.conversionStatus,
+    createdAt: source.createdAt.toISOString(),
+  };
 }
 
 function serializeItemBase(item: VariantSiblingRow): Omit<SerializedItem, "variants"> {
@@ -94,6 +124,9 @@ function serializeItemBase(item: VariantSiblingRow): Omit<SerializedItem, "varia
     group: item.group ? { id: item.group.id, name: item.group.name, color: item.group.color } : null,
     variantGroupId: item.variantGroupId,
     isSelected: item.isSelected,
+    priceSources: [...item.priceSources]
+      .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime())
+      .map(serializePriceSource),
   };
 }
 
@@ -113,6 +146,7 @@ export function serializeItem(item: ItemWithLabels): SerializedItem {
 export const ITEM_INCLUDE = {
   labels: { include: { label: true } },
   group: true,
+  priceSources: true,
   variantGroup: { include: { items: { include: VARIANT_SIBLING_INCLUDE } } },
 } as const;
 

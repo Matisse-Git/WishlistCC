@@ -2,10 +2,11 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ItemCard } from "./ItemCard";
+import { PriceSourceCard } from "./PriceSourceCard";
 import { VariantCard } from "./VariantCard";
 import { ItemFormModal, type ItemFormInitial } from "./ItemFormModal";
 import { MarkBoughtModal } from "./MarkBoughtModal";
+import { PriceSourceModal } from "./PriceSourceModal";
 import { ConfirmDialog } from "./ui/ConfirmDialog";
 import { useToast } from "./ToastProvider";
 import type { SerializedItem } from "@/lib/items";
@@ -45,6 +46,7 @@ export function ItemsGrid({ items, allowMarkBought = true }: { items: Serialized
   const { showToast } = useToast();
   const [editItem, setEditItem] = useState<SerializedItem | null>(null);
   const [variantTarget, setVariantTarget] = useState<SerializedItem | null>(null);
+  const [priceSourceTarget, setPriceSourceTarget] = useState<SerializedItem | null>(null);
   const [boughtItem, setBoughtItem] = useState<SerializedItem | null>(null);
   const [deleteItem, setDeleteItem] = useState<SerializedItem | null>(null);
   const [deleting, setDeleting] = useState(false);
@@ -97,15 +99,17 @@ export function ItemsGrid({ items, allowMarkBought = true }: { items: Serialized
               onMarkBought={allowMarkBought ? setBoughtItem : undefined}
               onDelete={setDeleteItem}
               onAddVariant={setVariantTarget}
+              onAddPriceSource={setPriceSourceTarget}
             />
           ) : (
-            <ItemCard
+            <PriceSourceCard
               key={item.id}
               item={item}
               onEdit={setEditItem}
               onMarkBought={allowMarkBought ? setBoughtItem : undefined}
               onDelete={setDeleteItem}
               onAddVariant={setVariantTarget}
+              onAddPriceSource={setPriceSourceTarget}
             />
           )
         )}
@@ -124,6 +128,13 @@ export function ItemsGrid({ items, allowMarkBought = true }: { items: Serialized
         onClose={() => setVariantTarget(null)}
         mode="add"
         initial={variantTarget ? toVariantAddInitial(variantTarget) : undefined}
+        onSaved={() => router.refresh()}
+      />
+
+      <PriceSourceModal
+        open={priceSourceTarget !== null}
+        onClose={() => setPriceSourceTarget(null)}
+        item={priceSourceTarget}
         onSaved={() => router.refresh()}
       />
 

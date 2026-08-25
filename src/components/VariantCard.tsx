@@ -4,9 +4,9 @@ import { useLayoutEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { GitCompare, Loader2, Plus } from "lucide-react";
 import Decimal from "decimal.js";
-import { ItemCard } from "./ItemCard";
+import { PriceSourceCard } from "./PriceSourceCard";
 import { useToast } from "./ToastProvider";
-import { useVariantTotals } from "./VariantTotalsProvider";
+import { useLiveTotals } from "./LiveTotalsProvider";
 import { formatMoney, toDecimal } from "@/lib/money";
 import { cn } from "@/lib/cn";
 import type { SerializedItem } from "@/lib/items";
@@ -18,16 +18,17 @@ interface VariantCardProps {
   onMarkBought?: (item: SerializedItem) => void;
   onDelete?: (item: SerializedItem) => void;
   onAddVariant?: (item: SerializedItem) => void;
+  onAddPriceSource?: (item: SerializedItem) => void;
 }
 
 function truncate(title: string, max = 24): string {
   return title.length > max ? `${title.slice(0, max - 1)}…` : title;
 }
 
-export function VariantCard({ item, onEdit, onMarkBought, onDelete, onAddVariant }: VariantCardProps) {
+export function VariantCard({ item, onEdit, onMarkBought, onDelete, onAddVariant, onAddPriceSource }: VariantCardProps) {
   const router = useRouter();
   const { showToast } = useToast();
-  const { setOverride, clearOverride } = useVariantTotals();
+  const { setOverride, clearOverride } = useLiveTotals();
 
   const options = item.variants.length > 1 ? item.variants : [item];
   const serverSelected = options.find((v) => v.isSelected) ?? options[0];
@@ -123,11 +124,12 @@ export function VariantCard({ item, onEdit, onMarkBought, onDelete, onAddVariant
 
   return (
     <div className="flex flex-col gap-2">
-      <ItemCard
-        item={selected}
-        onEdit={onEdit ? () => onEdit(selectedWithVariants) : undefined}
+      <PriceSourceCard
+        item={selectedWithVariants}
+        onEdit={onEdit}
         onMarkBought={onMarkBought}
         onDelete={onDelete}
+        onAddPriceSource={onAddPriceSource}
       />
 
       <div className="flex flex-wrap items-center gap-1.5 rounded-xl border border-dashed border-border bg-surface-muted/60 px-2.5 py-2">
