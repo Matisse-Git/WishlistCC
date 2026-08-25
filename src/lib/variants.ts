@@ -92,11 +92,12 @@ export async function detachVariant(itemId: string): Promise<void> {
   });
 }
 
-/** Makes `itemId` the selected (price-counted) member of its variant set; no-op if it isn't part of one. */
+/** Makes `itemId` the selected (price-counted) member of its variant set. */
 export async function selectVariant(itemId: string): Promise<void> {
   await prisma.$transaction(async (tx) => {
     const item = await tx.item.findUnique({ where: { id: itemId } });
-    if (!item?.variantGroupId) return;
+    if (!item) throw new Error("Item not found.");
+    if (!item.variantGroupId) throw new Error("Item is not part of a variant set.");
     await tx.item.updateMany({
       where: { variantGroupId: item.variantGroupId, NOT: { id: itemId } },
       data: { isSelected: false },

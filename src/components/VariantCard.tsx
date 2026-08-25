@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { GitCompare, Plus } from "lucide-react";
+import { GitCompare, Loader2, Plus } from "lucide-react";
 import { ItemCard } from "./ItemCard";
 import { useToast } from "./ToastProvider";
 import { formatMoney } from "@/lib/money";
@@ -25,26 +25,62 @@ function truncate(title: string, max = 24): string {
 export function VariantCard({ item, onEdit, onMarkBought, onDelete, onAddVariant }: VariantCardProps) {
   const router = useRouter();
   const { showToast } = useToast();
-  const [switching, setSwitching] = useState<string | null>(null);
 
   const options = item.variants.length > 1 ? item.variants : [item];
-  const selected = options.find((v) => v.isSelected) ?? options[0];
+  const serverSelected = options.find((v) => v.isSelected) ?? options[0];
+
+  // Applied the moment a pill is clicked, so switching feels instant instead
+  // of waiting on a round trip. Cleared once fresh server data (via
+  // router.refresh()) confirms a selection, so it never goes stale.
+  const [optimisticId, setOptimisticId] = useState<string | null>(null);
+  const [syncing, setSyncing] = useState(false);
+  const abortRef = useRef<AbortController | null>(null);
+  const latestRequestedIdRef = useRef<string | null>(null);
+
+  // Adjusted during render (React's recommended pattern — see ItemFormModal
+  // for the same idiom) rather than in an effect: once fresh server data
+  // confirms a selection, drop the local override on the very next paint
+  // instead of flashing the old state for an extra render first.
+  const selectionSignature = options.map((v) => (v.isSelected ? v.id : "_")).join(",");
+  const [lastSignature, setLastSignature] = useState(selectionSignature);
+  if (selectionSignature !== lastSignature) {
+    setLastSignature(selectionSignature);
+    setOptimisticId(null);
+  }
+
+  const selected = options.find((v) => v.id === optimisticId) ?? serverSelected;
 
   async function handleSwitch(target: SerializedItem) {
-    if (target.id === selected.id || switching) return;
-    setSwitching(target.id);
+    if (target.id === selected.id) return;
+
+    latestRequestedIdRef.current = target.id;
+    setOptimisticId(target.id);
+    setSyncing(true);
+
+    // A rapid second click cancels whatever switch is still in flight — only
+    // the latest one is allowed to land.
+    abortRef.current?.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
+
     try {
-      const res = await fetch(`/api/items/${target.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ selectVariant: true }),
+      const res = await fetch(`/api/items/${target.id}/select-variant`, {
+        method: "POST",
+        signal: controller.signal,
       });
       if (!res.ok) throw new Error("Failed to switch variant");
-      router.refresh();
+      if (latestRequestedIdRef.current === target.id) {
+        router.refresh();
+      }
     } catch (err) {
-      showToast(err instanceof Error ? err.message : "Failed to switch variant", "error");
+      if (controller.signal.aborted) return; // superseded by a newer click — its own request owns the outcome now
+      if (latestRequestedIdRef.current === target.id) {
+        setOptimisticId(null);
+        router.refresh(); // re-sync with whatever the server actually ended up with
+        showToast(err instanceof Error ? err.message : "Failed to switch variant", "error");
+      }
     } finally {
-      setSwitching(null);
+      if (latestRequestedIdRef.current === target.id) setSyncing(false);
     }
   }
 
@@ -64,24 +100,25 @@ export function VariantCard({ item, onEdit, onMarkBought, onDelete, onAddVariant
       />
 
       <div className="flex flex-wrap items-center gap-1.5 rounded-xl border border-dashed border-border bg-surface-muted/60 px-2.5 py-2">
-        <GitCompare className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+        {syncing ? (
+          <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin text-muted-foreground" />
+        ) : (
+          <GitCompare className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+        )}
         {options.map((v) => (
           <button
             key={v.id}
             type="button"
             onClick={() => handleSwitch(v)}
-            disabled={switching !== null}
             title={`${v.title} — ${formatMoney(v.convertedPrice ?? v.originalPrice, v.baseCurrency ?? v.originalCurrency)}`}
             className={cn(
-              "rounded-full px-2.5 py-1 text-xs font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-60",
+              "rounded-full px-2.5 py-1 text-xs font-medium transition-colors",
               v.id === selected.id
                 ? "bg-accent text-accent-foreground"
                 : "bg-surface text-muted-foreground hover:bg-accent-soft hover:text-accent-hover"
             )}
           >
-            {switching === v.id
-              ? "Switching…"
-              : `${truncate(v.title)} · ${formatMoney(v.convertedPrice ?? v.originalPrice, v.baseCurrency ?? v.originalCurrency)}`}
+            {truncate(v.title)} · {formatMoney(v.convertedPrice ?? v.originalPrice, v.baseCurrency ?? v.originalCurrency)}
           </button>
         ))}
         {onAddVariant && (

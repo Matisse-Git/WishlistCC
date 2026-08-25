@@ -4,7 +4,7 @@ import { getSettings } from "@/lib/settings";
 import { resolveLabelIdsByName } from "@/lib/labels";
 import { resolveGroupIdByName } from "@/lib/groups";
 import { computePriceFields } from "@/lib/conversion-service";
-import { attachVariant, detachVariant, selectVariant, deleteItem } from "@/lib/variants";
+import { attachVariant, detachVariant, deleteItem } from "@/lib/variants";
 import { itemUpdateSchema } from "@/lib/validation";
 import { ok, badRequest, notFound, validationError } from "@/lib/api-response";
 import type { Prisma } from "@/generated/prisma/client";
@@ -90,9 +90,6 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       // moving this item to a different group implicitly breaks it out of
       // the set rather than silently dragging its siblings along.
       await detachVariant(id);
-    }
-    if (data.selectVariant) {
-      await selectVariant(id);
     }
   } catch (err) {
     return badRequest(err instanceof Error ? err.message : "Failed to update variant");

@@ -60,8 +60,6 @@ export const itemCreateSchema = z.object({
 export const itemUpdateSchema = z.object({
   ...itemFields,
   title: itemFields.title.optional(),
-  // Makes this item the selected (price-counted) member of its variant set.
-  selectVariant: z.literal(true).optional(),
 });
 
 export const markBoughtSchema = z.object({
