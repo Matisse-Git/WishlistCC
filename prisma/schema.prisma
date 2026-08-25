@@ -36,6 +36,18 @@ model Group {
   items     Item[]
 }
 
+// Ties together a set of Items that are alternatives for the same slot
+// (e.g. "650W PSU" vs "750W PSU") — only the member with isSelected=true
+// counts toward wishlist/group totals. Row itself carries no data; it just
+// anchors the relation so a set can be created/dissolved atomically. All
+// invariants (exactly one isSelected per set, sets never shrink to 1
+// member) are enforced in application code — see src/lib/variants.ts.
+model VariantGroup {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  items     Item[]
+}
+
 model Item {
   id     String  @id @default(cuid())
   url    String?
@@ -72,9 +84,16 @@ model Item {
   groupId String?
   group   Group?  @relation(fields: [groupId], references: [id], onDelete: SetNull)
 
+  // Variant sets: alternatives for the same purchase decision (see VariantGroup).
+  // isSelected defaults true so plain, non-variant items are always counted.
+  variantGroupId String?
+  variantGroup   VariantGroup? @relation(fields: [variantGroupId], references: [id], onDelete: SetNull)
+  isSelected     Boolean       @default(true)
+
   @@index([status])
   @@index([createdAt])
   @@index([groupId])
+  @@index([variantGroupId])
 }
 
 model ItemLabel {

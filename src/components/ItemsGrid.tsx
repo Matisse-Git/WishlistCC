@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ItemCard } from "./ItemCard";
+import { VariantCard } from "./VariantCard";
 import { ItemFormModal, type ItemFormInitial } from "./ItemFormModal";
 import { MarkBoughtModal } from "./MarkBoughtModal";
 import { ConfirmDialog } from "./ui/ConfirmDialog";
@@ -27,6 +28,15 @@ function toInitial(item: SerializedItem): ItemFormInitial {
     status: item.status,
     labels: item.labels.map((l) => l.name),
     group: item.group?.name ?? null,
+    variants: item.variants,
+  };
+}
+
+function toVariantAddInitial(target: SerializedItem): ItemFormInitial {
+  return {
+    group: target.group?.name ?? null,
+    variantOfId: target.id,
+    variantOfTitle: target.title,
   };
 }
 
@@ -34,9 +44,26 @@ export function ItemsGrid({ items, allowMarkBought = true }: { items: Serialized
   const router = useRouter();
   const { showToast } = useToast();
   const [editItem, setEditItem] = useState<SerializedItem | null>(null);
+  const [variantTarget, setVariantTarget] = useState<SerializedItem | null>(null);
   const [boughtItem, setBoughtItem] = useState<SerializedItem | null>(null);
   const [deleteItem, setDeleteItem] = useState<SerializedItem | null>(null);
   const [deleting, setDeleting] = useState(false);
+
+  // Items sharing a variant set render once, as a single VariantCard —
+  // anchored at whichever member appears first in this list, but the card
+  // itself always resolves and displays the currently-selected sibling.
+  const renderItems = useMemo(() => {
+    const seen = new Set<string>();
+    const result: SerializedItem[] = [];
+    for (const item of items) {
+      if (item.variantGroupId) {
+        if (seen.has(item.variantGroupId)) continue;
+        seen.add(item.variantGroupId);
+      }
+      result.push(item);
+    }
+    return result;
+  }, [items]);
 
   async function handleDelete() {
     if (!deleteItem) return;
@@ -57,15 +84,27 @@ export function ItemsGrid({ items, allowMarkBought = true }: { items: Serialized
   return (
     <>
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-        {items.map((item) => (
-          <ItemCard
-            key={item.id}
-            item={item}
-            onEdit={setEditItem}
-            onMarkBought={allowMarkBought ? setBoughtItem : undefined}
-            onDelete={setDeleteItem}
-          />
-        ))}
+        {renderItems.map((item) =>
+          item.variants.length > 1 ? (
+            <VariantCard
+              key={item.id}
+              item={item}
+              onEdit={setEditItem}
+              onMarkBought={allowMarkBought ? setBoughtItem : undefined}
+              onDelete={setDeleteItem}
+              onAddVariant={setVariantTarget}
+            />
+          ) : (
+            <ItemCard
+              key={item.id}
+              item={item}
+              onEdit={setEditItem}
+              onMarkBought={allowMarkBought ? setBoughtItem : undefined}
+              onDelete={setDeleteItem}
+              onAddVariant={setVariantTarget}
+            />
+          )
+        )}
       </div>
 
       <ItemFormModal
@@ -73,6 +112,14 @@ export function ItemsGrid({ items, allowMarkBought = true }: { items: Serialized
         onClose={() => setEditItem(null)}
         mode="edit"
         initial={editItem ? toInitial(editItem) : undefined}
+        onSaved={() => router.refresh()}
+      />
+
+      <ItemFormModal
+        open={variantTarget !== null}
+        onClose={() => setVariantTarget(null)}
+        mode="add"
+        initial={variantTarget ? toVariantAddInitial(variantTarget) : undefined}
         onSaved={() => router.refresh()}
       />
 

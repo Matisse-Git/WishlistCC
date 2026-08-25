@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/db";
 import { getItemById } from "@/lib/items";
+import { resolveSetOnPurchase } from "@/lib/variants";
 import { markBoughtSchema } from "@/lib/validation";
 import { ok, notFound, validationError } from "@/lib/api-response";
 
@@ -36,6 +37,12 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       ...(data.notes !== undefined ? { notes: data.notes } : {}),
     },
   });
+
+  // Buying one option resolves the choice — the alternatives stop being
+  // suppressed from totals and go back to being independent items.
+  if (existing.variantGroupId) {
+    await resolveSetOnPurchase(existing.variantGroupId);
+  }
 
   const item = await getItemById(updated.id);
   return ok(item);

@@ -47,6 +47,9 @@ const itemFields = {
   notes: z.string().max(5000).nullable().optional(),
   labels: z.array(z.string().trim().min(1)).optional(),
   group: z.string().trim().min(1).max(50).nullable().optional(),
+  // Id of another item to become a variant (alternative) of — joins/creates
+  // that item's variant set. `null` explicitly detaches from the current set.
+  variantOf: z.string().min(1).nullable().optional(),
 };
 
 export const itemCreateSchema = z.object({
@@ -57,6 +60,8 @@ export const itemCreateSchema = z.object({
 export const itemUpdateSchema = z.object({
   ...itemFields,
   title: itemFields.title.optional(),
+  // Makes this item the selected (price-counted) member of its variant set.
+  selectVariant: z.literal(true).optional(),
 });
 
 export const markBoughtSchema = z.object({

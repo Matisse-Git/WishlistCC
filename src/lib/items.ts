@@ -7,9 +7,20 @@ function ci(value: string): Prisma.StringFilter {
   return { contains: value, mode: "insensitive" };
 }
 
+const VARIANT_SIBLING_INCLUDE = {
+  labels: { include: { label: true } },
+  group: true,
+} as const;
+
 type ItemWithLabels = Prisma.ItemGetPayload<{
-  include: { labels: { include: { label: true } }; group: true };
+  include: {
+    labels: { include: { label: true } };
+    group: true;
+    variantGroup: { include: { items: { include: typeof VARIANT_SIBLING_INCLUDE } } };
+  };
 }>;
+
+type VariantSiblingRow = Prisma.ItemGetPayload<{ include: typeof VARIANT_SIBLING_INCLUDE }>;
 
 export interface SerializedLabel {
   id: string;
@@ -45,9 +56,20 @@ export interface SerializedItem {
   updatedAt: string;
   labels: SerializedLabel[];
   group: SerializedGroupRef | null;
+  /** Null when this item isn't part of a variant set. */
+  variantGroupId: string | null;
+  /** Whether this item's price counts toward wishlist/group totals. Always true outside a variant set. */
+  isSelected: boolean;
+  /**
+   * Every member of this item's variant set, including itself, sorted
+   * selected-first then oldest-first — empty when not part of a set.
+   * Siblings never carry their own nested `variants` (always `[]`) to avoid
+   * duplicating the whole set at every level.
+   */
+  variants: SerializedItem[];
 }
 
-export function serializeItem(item: ItemWithLabels): SerializedItem {
+function serializeItemBase(item: VariantSiblingRow): Omit<SerializedItem, "variants"> {
   return {
     id: item.id,
     url: item.url,
@@ -70,10 +92,29 @@ export function serializeItem(item: ItemWithLabels): SerializedItem {
     updatedAt: item.updatedAt.toISOString(),
     labels: item.labels.map((l) => ({ id: l.label.id, name: l.label.name, color: l.label.color })),
     group: item.group ? { id: item.group.id, name: item.group.name, color: item.group.color } : null,
+    variantGroupId: item.variantGroupId,
+    isSelected: item.isSelected,
   };
 }
 
-export const ITEM_INCLUDE = { labels: { include: { label: true } }, group: true } as const;
+function sortVariants(items: VariantSiblingRow[]): VariantSiblingRow[] {
+  return [...items].sort((a, b) => {
+    if (a.isSelected !== b.isSelected) return a.isSelected ? -1 : 1;
+    return a.createdAt.getTime() - b.createdAt.getTime();
+  });
+}
+
+export function serializeItem(item: ItemWithLabels): SerializedItem {
+  const siblings = item.variantGroup?.items ?? [];
+  const variants = siblings.length > 1 ? sortVariants(siblings).map((s) => ({ ...serializeItemBase(s), variants: [] })) : [];
+  return { ...serializeItemBase(item), variants };
+}
+
+export const ITEM_INCLUDE = {
+  labels: { include: { label: true } },
+  group: true,
+  variantGroup: { include: { items: { include: VARIANT_SIBLING_INCLUDE } } },
+} as const;
 
 export type SortOption =
   | "createdAt"
@@ -172,8 +213,8 @@ export interface DashboardStats {
 
 export async function getDashboardStats(): Promise<DashboardStats> {
   const [activeItems, boughtItems] = await Promise.all([
-    prisma.item.findMany({ where: { status: "wishlist" } }),
-    prisma.item.findMany({ where: { status: "bought" } }),
+    prisma.item.findMany({ where: { status: "wishlist", isSelected: true } }),
+    prisma.item.findMany({ where: { status: "bought", isSelected: true } }),
   ]);
 
   let activeTotal = new Decimal(0);
@@ -225,7 +266,7 @@ export async function getRecentItems(limit = 6): Promise<SerializedItem[]> {
 
 export async function getMostExpensiveItems(limit = 5): Promise<SerializedItem[]> {
   const items = await prisma.item.findMany({
-    where: { status: "wishlist", convertedPrice: { not: null } },
+    where: { status: "wishlist", convertedPrice: { not: null }, isSelected: true },
     include: ITEM_INCLUDE,
   });
   const sorted = items.sort((a, b) => Number(b.convertedPrice) - Number(a.convertedPrice));

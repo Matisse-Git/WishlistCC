@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Pencil, ShoppingCart, Trash2, ExternalLink, CheckCircle2, Layers } from "lucide-react";
+import { Pencil, ShoppingCart, Trash2, ExternalLink, CheckCircle2, Layers, GitCompare } from "lucide-react";
 import { PriceTag } from "./PriceTag";
 import { Badge } from "./ui/Badge";
 import { IconButton } from "./ui/IconButton";
@@ -22,9 +22,10 @@ interface ItemCardProps {
   onEdit?: (item: SerializedItem) => void;
   onMarkBought?: (item: SerializedItem) => void;
   onDelete?: (item: SerializedItem) => void;
+  onAddVariant?: (item: SerializedItem) => void;
 }
 
-export function ItemCard({ item, onEdit, onMarkBought, onDelete }: ItemCardProps) {
+export function ItemCard({ item, onEdit, onMarkBought, onDelete, onAddVariant }: ItemCardProps) {
   const isBought = item.status === "bought";
 
   return (
@@ -118,6 +119,11 @@ export function ItemCard({ item, onEdit, onMarkBought, onDelete }: ItemCardProps
             {onEdit && (
               <IconButton onClick={() => onEdit(item)} aria-label="Edit item">
                 <Pencil className="h-3.5 w-3.5" />
+              </IconButton>
+            )}
+            {onAddVariant && !isBought && (
+              <IconButton onClick={() => onAddVariant(item)} aria-label="Add a variant to compare">
+                <GitCompare className="h-3.5 w-3.5" />
               </IconButton>
             )}
             {onMarkBought && !isBought && (

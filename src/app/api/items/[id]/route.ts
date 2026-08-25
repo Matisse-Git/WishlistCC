@@ -4,6 +4,7 @@ import { getSettings } from "@/lib/settings";
 import { resolveLabelIdsByName } from "@/lib/labels";
 import { resolveGroupIdByName } from "@/lib/groups";
 import { computePriceFields } from "@/lib/conversion-service";
+import { attachVariant, detachVariant, selectVariant, deleteItem } from "@/lib/variants";
 import { itemUpdateSchema } from "@/lib/validation";
 import { ok, badRequest, notFound, validationError } from "@/lib/api-response";
 import type { Prisma } from "@/generated/prisma/client";
@@ -71,12 +72,32 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     };
   }
 
+  let resolvedGroupId: string | null | undefined;
   if (data.group !== undefined) {
-    const groupId = await resolveGroupIdByName(data.group);
-    data_.group = groupId ? { connect: { id: groupId } } : { disconnect: true };
+    resolvedGroupId = await resolveGroupIdByName(data.group);
+    data_.group = resolvedGroupId ? { connect: { id: resolvedGroupId } } : { disconnect: true };
   }
 
   await prisma.item.update({ where: { id }, data: data_ });
+
+  try {
+    if (data.variantOf) {
+      await attachVariant(id, data.variantOf);
+    } else if (data.variantOf === null) {
+      await detachVariant(id);
+    } else if (existing.variantGroupId && resolvedGroupId !== undefined && resolvedGroupId !== existing.groupId) {
+      // Variants only make sense as alternatives within the same group —
+      // moving this item to a different group implicitly breaks it out of
+      // the set rather than silently dragging its siblings along.
+      await detachVariant(id);
+    }
+    if (data.selectVariant) {
+      await selectVariant(id);
+    }
+  } catch (err) {
+    return badRequest(err instanceof Error ? err.message : "Failed to update variant");
+  }
+
   const item = await getItemById(id);
   return ok(item);
 }
@@ -86,6 +107,6 @@ export async function DELETE(_request: Request, { params }: { params: Promise<{ 
   const existing = await prisma.item.findUnique({ where: { id } });
   if (!existing) return notFound("Item not found");
 
-  await prisma.item.delete({ where: { id } });
+  await deleteItem(id);
   return ok({ success: true });
 }

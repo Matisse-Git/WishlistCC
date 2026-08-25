@@ -8,6 +8,7 @@ import { CurrencySelect } from "./ui/CurrencySelect";
 import { Input, Textarea, Select, Label } from "./ui/Input";
 import { LabelPicker } from "./LabelPicker";
 import { GroupPicker } from "./GroupPicker";
+import { VariantPicker } from "./VariantPicker";
 import { useToast } from "./ToastProvider";
 import type { SerializedItem } from "@/lib/items";
 import type { ExtractionDebugInfo } from "@/lib/scrape/types";
@@ -30,6 +31,11 @@ export interface ItemFormInitial {
   labels?: string[];
   group?: string | null;
   debug?: ExtractionDebugInfo | null;
+  /** This item's current variant-set siblings (edit mode) — see VariantPicker. */
+  variants?: SerializedItem[];
+  /** Pre-selects "variant of" at a specific item id (used by the "Add variant" quick action). */
+  variantOfId?: string | null;
+  variantOfTitle?: string | null;
 }
 
 interface ItemFormModalProps {
@@ -54,6 +60,7 @@ const emptyState = () => ({
   notes: "",
   labels: [] as string[],
   group: "",
+  variantOf: undefined as string | null | undefined,
 });
 
 export function ItemFormModal({ open, onClose, mode, initial, warnings, onSaved }: ItemFormModalProps) {
@@ -87,6 +94,7 @@ export function ItemFormModal({ open, onClose, mode, initial, warnings, onSaved 
         notes: initial?.notes ?? "",
         labels: initial?.labels ?? [],
         group: initial?.group ?? "",
+        variantOf: initial?.variantOfId ?? undefined,
       });
       setLocalWarnings(warnings ?? []);
       setImageStage("direct");
@@ -165,6 +173,9 @@ export function ItemFormModal({ open, onClose, mode, initial, warnings, onSaved 
       } else if (mode === "edit" && initial?.conversionStatus === "manual") {
         payload.convertedPrice = null;
       }
+      if (form.variantOf !== undefined) {
+        payload.variantOf = form.variantOf;
+      }
 
       const url = mode === "add" ? "/api/items" : `/api/items/${initial?.id}`;
       const method = mode === "add" ? "POST" : "PATCH";
@@ -192,8 +203,20 @@ export function ItemFormModal({ open, onClose, mode, initial, warnings, onSaved 
     <Modal
       open={open}
       onClose={onClose}
-      title={mode === "add" ? "Add wishlist item" : "Edit item"}
-      description={mode === "add" ? "Paste a link and fetch details, or fill it in yourself." : undefined}
+      title={
+        mode === "add"
+          ? initial?.variantOfTitle
+            ? `Add a variant of "${initial.variantOfTitle}"`
+            : "Add wishlist item"
+          : "Edit item"
+      }
+      description={
+        mode === "add"
+          ? initial?.variantOfTitle
+            ? "This becomes a comparable alternative — only one option in the set counts toward your total."
+            : "Paste a link and fetch details, or fill it in yourself."
+          : undefined
+      }
       maxWidthClassName="max-w-xl"
       footer={
         <>
@@ -354,6 +377,23 @@ export function ItemFormModal({ open, onClose, mode, initial, warnings, onSaved 
             Group <span className="font-normal text-muted-foreground">(optional — e.g. &ldquo;Build a PC&rdquo;)</span>
           </Label>
           <GroupPicker value={form.group} onChange={(group) => set("group", group)} />
+        </div>
+
+        <div>
+          <Label>
+            Variant of{" "}
+            <span className="font-normal text-muted-foreground">
+              (optional — mark as an alternative to compare, like a 750W vs 650W PSU. Only one variant counts toward totals.)
+            </span>
+          </Label>
+          <VariantPicker
+            groupName={form.group}
+            excludeItemId={initial?.id}
+            siblings={(initial?.variants ?? []).filter((v) => v.id !== initial?.id)}
+            value={form.variantOf}
+            valueLabel={initial?.variantOfTitle ?? undefined}
+            onChange={(v) => set("variantOf", v)}
+          />
         </div>
 
         <div>

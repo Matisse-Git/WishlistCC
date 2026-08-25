@@ -4,6 +4,7 @@ import { getSettings } from "@/lib/settings";
 import { resolveLabelIdsByName } from "@/lib/labels";
 import { resolveGroupIdByName } from "@/lib/groups";
 import { computePriceFields } from "@/lib/conversion-service";
+import { attachVariant } from "@/lib/variants";
 import { itemCreateSchema, itemQuerySchema } from "@/lib/validation";
 import { ok, badRequest, validationError } from "@/lib/api-response";
 
@@ -57,6 +58,14 @@ export async function POST(request: Request) {
     },
     include: ITEM_INCLUDE,
   });
+
+  if (data.variantOf) {
+    try {
+      await attachVariant(created.id, data.variantOf);
+    } catch (err) {
+      return badRequest(err instanceof Error ? err.message : "Failed to link variant");
+    }
+  }
 
   const item = await getItemById(created.id);
   return ok(item, 201);

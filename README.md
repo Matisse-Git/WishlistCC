@@ -6,6 +6,7 @@ A personal wishlist tracker. Paste a product URL, it best-effort scrapes the tit
 
 - Paste a URL → server-side scrape (Open Graph, Twitter Card, JSON-LD `Product`, microdata, meta tags, `<title>` fallback) prefills an editable form. Extraction failure never blocks adding the item — you can always fill in details by hand.
 - Labels, priority, notes, search/filter/sort (all synced to the URL so views are shareable).
+- Groups bundle items into a project (e.g. "Build a PC"). Within a group, mark items as **variants** of each other (e.g. a 650W vs 750W PSU) to compare options side by side — only the selected variant counts toward the group/wishlist total, so pricing out alternatives never inflates your total.
 - Dashboard with active-wishlist total, missing-price count, bought total, and a savings-goal progress bar.
 - Mark items bought → moves them to a separate Bought view with spend totals (all-time and this month).
 - Currency conversion to a configured base currency, using cached exchange rates (refreshed every 24h, degrades gracefully to stale cache or manual entry if the rate API is unreachable).
@@ -99,7 +100,7 @@ Unset by default — the app runs with no login. If you deploy it somewhere reac
 ## Project structure
 
 ```
-prisma/schema.prisma       Data model (Setting, Label, Item, ItemLabel, ExchangeRateCache)
+prisma/schema.prisma       Data model (Setting, Label, Group, VariantGroup, Item, ItemLabel, ExchangeRateCache)
 src/lib/                   Framework-agnostic logic: money, currency, scraper, validation, db
 src/app/api/                Route handlers (items, labels, settings, rates, auth)
 src/app/{,items,bought,settings,login}/  Pages

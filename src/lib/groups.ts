@@ -15,13 +15,16 @@ export interface SerializedGroup {
 export async function listGroups(): Promise<SerializedGroup[]> {
   const groups = await prisma.group.findMany({
     orderBy: { name: "asc" },
-    include: { items: { select: { status: true, convertedPrice: true, boughtPrice: true, originalPrice: true } } },
+    include: {
+      items: { select: { status: true, convertedPrice: true, boughtPrice: true, originalPrice: true, isSelected: true } },
+    },
   });
 
   return groups.map((g) => {
     let activeTotal = new Decimal(0);
     let boughtTotal = new Decimal(0);
     for (const item of g.items) {
+      if (!item.isSelected) continue;
       if (item.status === "bought") {
         boughtTotal = boughtTotal.plus(toDecimal(item.boughtPrice) ?? toDecimal(item.convertedPrice) ?? toDecimal(item.originalPrice) ?? 0);
       } else {
